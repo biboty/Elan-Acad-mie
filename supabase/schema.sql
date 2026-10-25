@@ -187,7 +187,8 @@ for each row execute procedure public.handle_new_user();
 create or replace function public.protect_profile_fields() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() then
+  -- Depuis l'application, seul un administrateur peut changer un rôle ; depuis l'éditeur SQL (pas d'utilisateur connecté), tout est permis.
+  if auth.uid() is not null and not public.is_admin() then
     new.role := old.role;
     new.family_id := old.family_id;
   end if;
