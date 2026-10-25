@@ -21,7 +21,8 @@ create table if not exists public.families (
 create table if not exists public.groups (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  level text not null check (level in ('explorateurs','batisseurs','argumentateurs','decideurs')),
+  kind text not null default 'atelier' check (kind in ('atelier','cours')),
+  level text not null check (level in ('explorateurs','batisseurs','argumentateurs','decideurs','college','lycee')),
   day text,
   start_time text,
   animateur_id uuid references auth.users(id) on delete set null,
@@ -37,6 +38,9 @@ create table if not exists public.children (
   level text check (level in ('explorateurs','batisseurs','argumentateurs','decideurs')),
   group_id uuid references public.groups(id) on delete set null,
   sessions_planned int not null default 32,
+  course_group_id uuid references public.groups(id) on delete set null,
+  course_sessions_planned int not null default 30,
+  school_class text,
   status text not null default 'inscrit' check (status in ('essai','inscrit','parti')),
   notes text,
   created_at timestamptz not null default now()
@@ -132,6 +136,16 @@ create table if not exists public.waitlist (
   created_at timestamptz not null default now()
 );
 
+-- ---------------------------------------------------------------- Mises à jour d'une base existante (sans effet sur une base neuve)
+alter table public.groups add column if not exists kind text not null default 'atelier';
+alter table public.groups drop constraint if exists groups_kind_check;
+alter table public.groups add constraint groups_kind_check check (kind in ('atelier','cours'));
+alter table public.groups drop constraint if exists groups_level_check;
+alter table public.groups add constraint groups_level_check check (level in ('explorateurs','batisseurs','argumentateurs','decideurs','college','lycee'));
+alter table public.children add column if not exists course_group_id uuid references public.groups(id) on delete set null;
+alter table public.children add column if not exists course_sessions_planned int not null default 30;
+alter table public.children add column if not exists school_class text;
+
 -- ---------------------------------------------------------------- Fonctions d'aide (rôle de l'utilisateur connecté)
 create or replace function public.my_role() returns text
 language sql stable security definer set search_path = public as $$
@@ -155,7 +169,7 @@ $$;
 
 create or replace function public.is_animateur_of_child(c uuid) returns boolean
 language sql stable security definer set search_path = public as $$
-  select coalesce((select g.animateur_id = auth.uid() from public.children ch join public.groups g on g.id = ch.group_id where ch.id = c), false)
+  select exists (select 1 from public.children ch join public.groups g on g.id = ch.group_id or g.id = ch.course_group_id where ch.id = c and g.animateur_id = auth.uid())
 $$;
 
 create or replace function public.is_parent_of_child(c uuid) returns boolean
@@ -206,19 +220,25 @@ create trigger monthly_reports_touch before update on public.monthly_reports
 for each row execute procedure public.touch_updated_at();
 
 -- ---------------------------------------------------------------- Vue de progression (séances faites / restantes)
-create or replace view public.child_progress with (security_invoker = true) as
+drop view if exists public.child_progress;
+create view public.child_progress with (security_invoker = true) as
 select
   c.id as child_id,
   c.sessions_planned,
-  coalesce(sum(case when a.present then 1 else 0 end), 0)::int as sessions_done,
-  coalesce(sum(case when not a.present then 1 else 0 end), 0)::int as sessions_missed,
-  greatest(c.sessions_planned - coalesce(sum(case when a.present then 1 else 0 end), 0), 0)::int as sessions_remaining,
+  c.course_sessions_planned,
+  (count(*) filter (where a.present and g.kind = 'atelier'))::int as sessions_done,
+  (count(*) filter (where a.present is false and g.kind = 'atelier'))::int as sessions_missed,
+  greatest(c.sessions_planned - (count(*) filter (where a.present and g.kind = 'atelier')), 0)::int as sessions_remaining,
+  (count(*) filter (where a.present and g.kind = 'cours'))::int as course_done,
+  (count(*) filter (where a.present is false and g.kind = 'cours'))::int as course_missed,
+  greatest(c.course_sessions_planned - (count(*) filter (where a.present and g.kind = 'cours')), 0)::int as course_remaining,
   max(s.session_date) as last_session,
   (select max(month) from public.monthly_reports r where r.child_id = c.id) as last_report_month
 from public.children c
 left join public.attendance a on a.child_id = c.id
 left join public.sessions s on s.id = a.session_id
-group by c.id, c.sessions_planned;
+left join public.groups g on g.id = s.group_id
+group by c.id, c.sessions_planned, c.course_sessions_planned;
 
 -- ---------------------------------------------------------------- Sécurité par ligne (RLS)
 alter table public.families enable row level security;
@@ -249,27 +269,27 @@ create policy profiles_update_self on public.profiles for update to authenticate
 create policy families_admin on public.families for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy families_parent on public.families for select to authenticated using (id = public.my_family());
 create policy families_animateur on public.families for select to authenticated using (
-  public.my_role() = 'animateur' and exists (select 1 from public.children c join public.groups g on g.id = c.group_id where c.family_id = families.id and g.animateur_id = auth.uid())
+  public.my_role() = 'animateur' and exists (select 1 from public.children c join public.groups g on g.id = c.group_id or g.id = c.course_group_id where c.family_id = families.id and g.animateur_id = auth.uid())
 );
 
 -- groups
 create policy groups_admin on public.groups for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy groups_animateur on public.groups for select to authenticated using (animateur_id = auth.uid());
 create policy groups_parent on public.groups for select to authenticated using (
-  exists (select 1 from public.children c where c.group_id = groups.id and c.family_id = public.my_family())
+  exists (select 1 from public.children c where (c.group_id = groups.id or c.course_group_id = groups.id) and c.family_id = public.my_family())
 );
 
 -- children
 create policy children_admin on public.children for all to authenticated using (public.is_admin()) with check (public.is_admin());
-create policy children_animateur_select on public.children for select to authenticated using (public.is_animateur_of_group(group_id));
-create policy children_animateur_update on public.children for update to authenticated using (public.is_animateur_of_group(group_id)) with check (public.is_animateur_of_group(group_id));
+create policy children_animateur_select on public.children for select to authenticated using (public.is_animateur_of_group(group_id) or public.is_animateur_of_group(course_group_id));
+create policy children_animateur_update on public.children for update to authenticated using (public.is_animateur_of_group(group_id) or public.is_animateur_of_group(course_group_id)) with check (public.is_animateur_of_group(group_id) or public.is_animateur_of_group(course_group_id));
 create policy children_parent on public.children for select to authenticated using (family_id = public.my_family());
 
 -- sessions
 create policy sessions_admin on public.sessions for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy sessions_animateur on public.sessions for all to authenticated using (public.is_animateur_of_group(group_id)) with check (public.is_animateur_of_group(group_id));
 create policy sessions_parent on public.sessions for select to authenticated using (
-  exists (select 1 from public.children c where c.group_id = sessions.group_id and c.family_id = public.my_family())
+  exists (select 1 from public.children c where (c.group_id = sessions.group_id or c.course_group_id = sessions.group_id) and c.family_id = public.my_family())
 );
 
 -- attendance

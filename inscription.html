@@ -19,7 +19,7 @@
       <img class="logo-dark" src="assets/logo-horizontal-negatif.svg" alt="" width="94" height="40">
     </a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-    <nav class="nav" id="nav" aria-label="Navigation principale"><a href="programme.html">Programme</a><a href="parcours.html">Parcours</a><a href="metiers.html">Rencontres métiers</a><a href="stages.html">Stages</a><a href="a-propos.html">À propos</a><a href="faq.html">FAQ</a><a href="app/">Espace famille</a><a class="btn btn-primary" href="inscription.html">Liste d'attente</a></nav>
+    <nav class="nav" id="nav" aria-label="Navigation principale"><a href="programme.html">Ateliers</a><a href="cours.html">Cours</a><a href="metiers.html">Rencontres métiers</a><a href="stages.html">Stages</a><a href="a-propos.html">À propos</a><a href="faq.html">FAQ</a><a href="app/">Espace famille</a><a class="btn btn-primary" href="inscription.html">S'inscrire</a></nav>
   </div>
 </header>
 <main>
@@ -27,12 +27,12 @@
   <div class="wrap split" style="align-items:start">
     <div>
       <p class="eyebrow">Liste d'attente</p>
-      <h1 style="margin-top:8px">Inscrivez votre enfant sur la liste d'attente</h1>
-      <p class="lead" style="margin-top:14px">Sans engagement. Vous recevez une réponse personnelle sous 24 h sur WhatsApp, puis les dates des rencontres métiers en visio et des ateliers d'essai, avant tout le monde.</p>
+      <h1 style="margin-top:8px">Inscrivez votre enfant</h1>
+      <p class="lead" style="margin-top:14px">Ateliers, cours, rencontres métiers ou stage : dites-nous ce qui vous intéresse. Sans engagement. Vous recevez une réponse personnelle sous 24 h sur WhatsApp, puis une invitation à un atelier ou un cours d'essai.</p>
       <div class="steps" style="grid-template-columns:1fr;margin-top:28px">
         <div class="step"><span class="when">Sous 24 h</span><h3>Une réponse personnelle</h3><p>Le fondateur vous répond lui-même sur WhatsApp, et répond à vos questions.</p></div>
         <div class="step"><span class="when">Ensuite</span><h3>Une rencontre métiers en visio</h3><p>Votre enfant assiste gratuitement à une première rencontre métiers, pour voir comment ça se passe.</p></div>
-        <div class="step"><span class="when">Puis</span><h3>Un atelier d'essai à Casablanca</h3><p>2 h en groupe de 8, avec une courte présentation à la fin. Vous décidez après, pas avant.</p></div>
+        <div class="step"><span class="when">Puis</span><h3>Un atelier ou un cours d'essai à Casablanca</h3><p>Votre enfant vient une fois, sans engagement. Vous décidez après, pas avant.</p></div>
       </div>
       <p class="notice" style="margin-top:20px">Vous préférez écrire directement ? WhatsApp <strong data-wa-number></strong> ou <span data-email></span>.</p>
     </div>
@@ -47,7 +47,7 @@
           <div class="field"><label for="enfant">Prénom de votre enfant</label><input id="enfant" name="enfant" type="text" required></div>
           <div class="field"><label for="age">Son âge</label><input id="age" name="age" type="number" inputmode="numeric" min="7" max="18" required></div>
         </div>
-        <div class="field"><label for="interet">Ce qui vous intéresse</label><select id="interet" name="interet"><option value="">Choisir</option><option>Le parcours annuel (samedi ou mercredi)</option><option>Un stage intensif pendant les vacances</option><option>Une rencontre métiers</option><option>Le bilan d'orientation (14-18 ans)</option><option>Je ne sais pas encore</option></select></div>
+        <div class="field"><label for="interet">Ce qui vous intéresse</label><select id="interet" name="interet"><option value="">Choisir</option><option>Les ateliers robotique et sciences (samedi ou mercredi)</option><option>Les cours de mathématiques et de physique</option><option>Les ateliers et les cours</option><option>Un stage intensif pendant les vacances</option><option>Une rencontre métiers</option><option>Le bilan d'orientation (14-18 ans)</option><option>Je ne sais pas encore</option></select></div>
         <div class="row">
           <div class="field"><label for="quartier">Votre quartier</label><input id="quartier" name="quartier" type="text" placeholder="Anfa, Californie, Bouskoura…"><span class="hint">Facultatif. Pour choisir la salle.</span></div>
           <div class="field"><label for="source">Comment nous avez-vous connus ?</label><select id="source" name="source"><option value="">Choisir</option><option>Par un parent</option><option>Instagram ou Facebook</option><option>LinkedIn</option><option>L'école de mon enfant</option><option>Une rencontre métiers</option><option>Autre</option></select></div>
@@ -69,18 +69,21 @@
     </div>
   </div>
 </section>
+<div class="modal" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="modal-titre" hidden>
+  <div class="modal-box"><div class="check" aria-hidden="true">✓</div><h2 id="modal-titre">Vos informations ont bien été enregistrées</h2><p id="modal-texte">Merci. Nous vous répondons sous 24 h sur WhatsApp.</p><div class="btn-row"><button class="btn btn-primary" type="button" data-modal-close>Continuer</button></div></div>
+</div>
 </main>
 <footer class="site-footer">
   <div class="wrap">
     <div class="logo-switch">
       <img class="logo-light" src="assets/logo-horizontal.svg" alt="Élan Académie" width="118" height="50" style="height:50px;width:auto">
       <img class="logo-dark" src="assets/logo-horizontal-negatif.svg" alt="" width="118" height="50" style="height:50px;width:auto">
-      <p style="margin-top:12px;max-width:34ch">Académie en présentiel pour les 7-18 ans à Casablanca. Créer, s'exprimer, choisir.</p>
+      <p style="margin-top:12px;max-width:34ch">Académie en présentiel à Casablanca pour les 7-18 ans : ateliers de robotique et de sciences, cours de mathématiques et de physique, rencontres métiers.</p>
       <p class="small muted" style="margin-top:10px">Élan Académie, SARL en cours de création. Casablanca, Maroc.</p>
     </div>
     <div>
       <h4>L'académie</h4>
-      <ul><li><a href="programme.html">Programme</a></li><li><a href="parcours.html">Les parcours</a></li><li><a href="metiers.html">Rencontres métiers</a></li><li><a href="stages.html">Stages intensifs</a></li><li><a href="a-propos.html">À propos</a></li></ul>
+      <ul><li><a href="programme.html">Ateliers robotique et sciences</a></li><li><a href="cours.html">Cours de maths et de physique</a></li><li><a href="metiers.html">Rencontres métiers</a></li><li><a href="stages.html">Stages de vacances</a></li><li><a href="parcours.html">Les parcours</a></li><li><a href="a-propos.html">À propos</a></li></ul>
     </div>
     <div>
       <h4>Parents</h4>

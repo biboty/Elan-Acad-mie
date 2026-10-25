@@ -61,3 +61,4 @@
 @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
 select.status { font: inherit; font-size: 0.88rem; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 6px 10px; }
 .muted-sm { color: var(--ink3); font-size: 0.85rem; }
+.progress-block + .progress-block { margin-top: 10px; }

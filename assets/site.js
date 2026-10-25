@@ -2,7 +2,7 @@
    Une seule chose à modifier avant la mise en ligne : CONFIG ci-dessous. */
 (function () {
   var CONFIG = {
-    whatsapp: "2126XXXXXXXX",            // numéro WhatsApp Business : indicatif 212, sans le 0 (ex. 212612345678)
+    whatsapp: "33760206797",             // numéro WhatsApp : indicatif international sans le + ni le 0 (ex. 33760206797 ou 212612345678)
     email: "contact@elanacademie.ma",
     instagram: "elanacademie",
     linkedin: "elan-academie",
@@ -15,9 +15,9 @@
     return text ? base + "?text=" + encodeURIComponent(text) : base;
   }
   function pretty(num) {
-    // 212612345678 -> +212 6 12 34 56 78
-    var m = /^212(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(num);
-    return m ? "+212 " + m[1] + " " + m[2] + " " + m[3] + " " + m[4] + " " + m[5] : "+" + num;
+    // 212612345678 -> +212 6 12 34 56 78 ; 33760206797 -> +33 7 60 20 67 97
+    var m = /^(212|33)(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(num);
+    return m ? "+" + m[1] + " " + m[2] + " " + m[3] + " " + m[4] + " " + m[5] + " " + m[6] : "+" + num;
   }
 
   function fill() {
@@ -95,6 +95,7 @@
       var finish = function (sentByForm) {
         f.hidden = true;
         status.hidden = false;
+        showModal(sentByForm);
         preview.value = text;
         openWa.setAttribute("href", waLink(text));
         var title = document.getElementById("status-titre");
@@ -124,6 +125,22 @@
     });
 
     if (copyBtn) copyBtn.addEventListener("click", function () { copyText(preview.value, copyBtn); });
+  }
+
+  function showModal(saved) {
+    var modal = document.getElementById("modal-confirm");
+    if (!modal) return;
+    var title = document.getElementById("modal-titre"), text = document.getElementById("modal-texte");
+    if (title) title.textContent = saved ? "Vos informations ont bien été enregistrées" : "Votre demande est prête";
+    if (text) text.textContent = saved
+      ? "Merci. Nous vous répondons sous 24 h sur WhatsApp. Vous pouvez aussi nous envoyer votre demande tout de suite avec le bouton WhatsApp."
+      : "Il reste à l'envoyer sur WhatsApp : le bouton ouvre la conversation avec le message déjà rempli.";
+    modal.hidden = false;
+    var close = function () { modal.hidden = true; document.removeEventListener("keydown", onKey); };
+    var onKey = function (e) { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    modal.querySelectorAll("[data-modal-close]").forEach(function (b) { b.addEventListener("click", close, { once: true }); });
+    var btn = modal.querySelector("button"); if (btn) btn.focus();
   }
 
   function intervenants() {

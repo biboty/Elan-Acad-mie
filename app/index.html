@@ -43,12 +43,13 @@
   <section class="wrap" id="view-auth" hidden>
     <div class="auth-layout">
       <div class="auth-intro">
-        <p class="eyebrow">Espace Élan Académie</p>
+        <p class="eyebrow">Espace famille · Élan Académie</p>
         <h1>Suivre le parcours de votre enfant</h1>
-        <p class="lead">Séances faites et restantes, projets, démos, badges, retours mensuels de l'animateur. Les animateurs y préparent leurs séances ; l'équipe y suit les inscriptions.</p>
-        <p class="small muted">Parents : créez votre compte avec l'adresse e-mail que vous avez donnée à l'inscription ; il est relié automatiquement à votre famille.</p>
+        <p class="lead">Ateliers et cours : séances faites et restantes, projets, démos, badges, retours mensuels de l'animateur. Les animateurs y préparent leurs séances ; l'équipe y suit les inscriptions.</p>
+        <div class="btn-row"><button class="btn btn-primary btn-lg" type="button" data-auth="login">Se connecter</button><button class="btn btn-secondary btn-lg" type="button" data-auth="signup">Créer un compte</button></div>
+        <p class="small muted">Parents : créez votre compte avec l'adresse e-mail que vous avez donnée à l'inscription ; il est relié automatiquement à votre famille. Pas encore inscrit ? <a href="../inscription.html">Inscrivez votre enfant</a> ou <a href="../index.html">découvrez l'académie</a>.</p>
       </div>
-      <div class="card auth-card">
+      <div class="card auth-card" id="auth-card" hidden>
         <div class="tabs" role="tablist">
           <button class="tab active" type="button" data-tab="login" role="tab">Connexion</button>
           <button class="tab" type="button" data-tab="signup" role="tab">Créer un compte</button>

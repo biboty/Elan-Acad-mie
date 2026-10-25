@@ -19,7 +19,7 @@ FAVICON = "data:image/svg+xml," + urllib.parse.quote(SYMBOL_SVG.format(attrs='wi
 
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600&family=Nunito+Sans:wght@400;700&display=swap">'
 
-NAV = [("index.html", "Accueil"), ("programme.html", "Programme"), ("parcours.html", "Parcours"), ("metiers.html", "Rencontres métiers"),
+NAV = [("index.html", "Accueil"), ("programme.html", "Ateliers"), ("cours.html", "Cours"), ("metiers.html", "Rencontres métiers"),
        ("stages.html", "Stages"), ("a-propos.html", "À propos"), ("faq.html", "FAQ")]
 
 def header(current):
@@ -31,7 +31,7 @@ def header(current):
       <img class="logo-dark" src="assets/logo-horizontal-negatif.svg" alt="" width="94" height="40">
     </a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-    <nav class="nav" id="nav" aria-label="Navigation principale">{links}<a href="app/">Espace famille</a><a class="btn btn-primary" href="inscription.html">Liste d'attente</a></nav>
+    <nav class="nav" id="nav" aria-label="Navigation principale">{links}<a href="app/">Espace famille</a><a class="btn btn-primary" href="inscription.html">S'inscrire</a></nav>
   </div>
 </header>'''
 
@@ -43,12 +43,12 @@ def footer():
     <div class="logo-switch">
       <img class="logo-light" src="assets/logo-horizontal.svg" alt="Élan Académie" width="118" height="50" style="height:50px;width:auto">
       <img class="logo-dark" src="assets/logo-horizontal-negatif.svg" alt="" width="118" height="50" style="height:50px;width:auto">
-      <p style="margin-top:12px;max-width:34ch">Académie en présentiel pour les 7-18 ans à Casablanca. Créer, s'exprimer, choisir.</p>
+      <p style="margin-top:12px;max-width:34ch">Académie en présentiel à Casablanca pour les 7-18 ans : ateliers de robotique et de sciences, cours de mathématiques et de physique, rencontres métiers.</p>
       <p class="small muted" style="margin-top:10px">Élan Académie, SARL en cours de création. Casablanca, Maroc.</p>
     </div>
     <div>
       <h4>L'académie</h4>
-      <ul><li><a href="programme.html">Programme</a></li><li><a href="parcours.html">Les parcours</a></li><li><a href="metiers.html">Rencontres métiers</a></li><li><a href="stages.html">Stages intensifs</a></li><li><a href="a-propos.html">À propos</a></li></ul>
+      <ul><li><a href="programme.html">Ateliers robotique et sciences</a></li><li><a href="cours.html">Cours de maths et de physique</a></li><li><a href="metiers.html">Rencontres métiers</a></li><li><a href="stages.html">Stages de vacances</a></li><li><a href="parcours.html">Les parcours</a></li><li><a href="a-propos.html">À propos</a></li></ul>
     </div>
     <div>
       <h4>Parents</h4>
@@ -75,111 +75,74 @@ def cta_band(title="Rejoignez la liste d'attente", text="Les familles de la list
 PAGES = {}
 
 # ---------------------------------------------------------------- Accueil
-PAGES["index.html"] = dict(title="Élan Académie", description="Académie en présentiel pour les 10-16 ans à Casablanca. Votre enfant choisit un projet, le fabrique, le présente devant les parents et rencontre des professionnels. Robotique, prise de parole, rencontres métiers.", body=f'''
+PAGES["index.html"] = dict(title="Élan Académie", description="Élan Académie, Casablanca : ateliers de robotique et de sciences, cours de mathématiques et de physique, rencontres métiers et stages de vacances pour les 7-18 ans.", body=f'''
 <section class="band hero">
   <div class="wrap">
     <div class="hero-text">
-      <p class="eyebrow">Académie pour les 10-16 ans · Casablanca</p>
-      <h1>Les notes ouvrent la porte. Ce que votre enfant apprend ici décide de ce qui se passe derrière.</h1>
-      <p class="lead">Ici, c'est votre enfant qui choisit son projet, le fabrique de ses mains, le présente devant un public et pose ses questions à des professionnels. En groupe de 8, le samedi ou le mercredi. Nous sommes là pour qu'il y arrive.</p>
-      <div class="btn-row"><a class="btn btn-primary btn-lg" href="inscription.html">Inscrire mon enfant sur la liste d'attente</a><a class="btn btn-secondary btn-lg" href="programme.html">Ce qu'il va faire</a></div>
-      <p class="small" style="color:var(--band-muted)">Les premiers ateliers d'essai et les premières rencontres métiers ont eu lieu. Les familles de la liste d'attente sont prévenues en premier des prochaines dates.</p>
+      <p class="eyebrow">Académie pour les 7-18 ans · Casablanca</p>
+      <h1>Votre enfant fabrique, comprend, prend la parole et choisit son avenir.</h1>
+      <p class="lead">Élan Académie, c'est quatre choses en un seul lieu : des ateliers de robotique et de sciences, des cours de mathématiques et de physique, des rencontres avec des professionnels, et des stages pendant les vacances. En petits groupes, le samedi, le mercredi et le soir en semaine.</p>
+      <div class="btn-row"><a class="btn btn-primary btn-lg" href="inscription.html">S'inscrire</a><a class="btn btn-secondary btn-lg" href="app/">Espace famille</a></div>
+      <p class="small" style="color:var(--band-muted)">L'inscription prend deux minutes et n'engage à rien : nous vous rappelons sous 24 h.</p>
     </div>
     <div class="hero-sym" aria-hidden="true">{symbol('width="360" height="360"', node="var(--band-node)", top="var(--band-accent)")}</div>
   </div>
 </section>
 
-<section class="facts-band">
-  <div class="wrap facts">
-    <div class="fact"><strong class="num">8</strong><span>enfants par groupe : chacun a la parole, chacun a les mains sur le projet</span></div>
-    <div class="fact"><strong class="num">1</strong><span>projet par trimestre, que l'enfant choisit lui-même</span></div>
-    <div class="fact"><strong class="num">4</strong><span>démos par an, où il présente son travail devant les parents</span></div>
-    <div class="fact"><strong class="num">2 h</strong><span>par semaine, le samedi ou le mercredi</span></div>
-  </div>
-</section>
-
 <section class="section">
   <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Ce que votre enfant fait chez Élan</p><h2>Il crée, il s'exprime, il choisit</h2><p class="lead">À l'école, on lui demande de réussir des examens. Ici, on lui demande trois choses qu'on n'enseigne presque nulle part : fabriquer quelque chose de concret, le défendre devant un public, et choisir une direction en connaissance de cause.</p></div>
-    <div class="grid grid-3">
-      <article class="card pillar"><span class="pillar-num">01</span><h3>Il crée</h3><p>Il choisit un projet parmi trois, forme son binôme, construit, programme, teste, recommence. À la fin du trimestre, l'objet fonctionne, et c'est lui qui l'a fait.</p><ul><li>LEGO SPIKE, micro:bit, Arduino, impression 3D</li><li>Un animateur pour 8 enfants, qui aide sans faire à sa place</li><li>Chaque projet rejoint son portfolio en ligne</li></ul></article>
-      <article class="card pillar"><span class="pillar-num">02</span><h3>Il s'exprime</h3><p>Il présente son projet devant les parents toutes les huit semaines : ce qu'il a fait, ce qui a marché, ce qu'il ferait autrement. Il apprend à tenir debout devant un public, et à aimer ça.</p><ul><li>Une démo par trimestre, seul, sans notes à partir de 13 ans</li><li>Des débats préparés, où il défend une position</li><li>Un intervenant expression pour la voix, le regard, la structure</li></ul></article>
-      <article class="card pillar"><span class="pillar-num">03</span><h3>Il choisit</h3><p>Il rencontre un ingénieur, un médecin, un avocat, un entrepreneur, et c'est lui qui pose les questions. Avant de choisir un métier, il a parlé à des gens qui le font.</p><ul><li>Une rencontre métiers par mois, préparée avec l'animateur</li><li>Ses questions, posées par lui, à voix haute</li><li>À partir de 14 ans, un bilan d'orientation et un plan sur deux ans</li></ul></article>
+    <div class="section-head"><p class="eyebrow">Ce que nous proposons</p><h2>Quatre façons d'aider votre enfant</h2><p class="lead">Chaque famille choisit ce dont son enfant a besoin : une seule de ces offres, ou plusieurs.</p></div>
+    <div class="grid grid-4">
+      <article class="card offer"><span class="offer-num">01</span><h3>Ateliers robotique et sciences</h3><p>Un projet concret par trimestre (robot, station météo, objet imprimé en 3D), construit en groupe de 8 et présenté devant les parents.</p><a class="more" href="programme.html">Voir les ateliers</a></article>
+      <article class="card offer"><span class="offer-num">02</span><h3>Cours de mathématiques et de physique</h3><p>Du collège au lycée, en groupe de 6 au maximum : reprendre le cours, s'entraîner, préparer les contrôles et les examens.</p><a class="more" href="cours.html">Voir les cours</a></article>
+      <article class="card offer"><span class="offer-num">03</span><h3>Rencontres métiers et orientation</h3><p>Un professionnel raconte son métier à huit enfants, qui posent leurs questions. Un bilan d'orientation pour les 14-18 ans.</p><a class="more" href="metiers.html">Voir les rencontres</a></article>
+      <article class="card offer"><span class="offer-num">04</span><h3>Stages de vacances</h3><p>Cinq jours de 9 h à 15 h sur un projet complet, démo devant les parents le vendredi. Vacances scolaires et été.</p><a class="more" href="stages.html">Voir les stages</a></article>
     </div>
   </div>
 </section>
 
 <section class="section band-2" style="padding-top:clamp(48px,7vw,88px)">
   <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Premiers retours</p><h2>Nous avons commencé, et les enfants en redemandent</h2><p class="lead">Avant d'ouvrir la liste d'attente, nous avons interrogé des parents, réuni un premier groupe en atelier d'essai et tenu une première rencontre métiers. Les retours des enfants et des parents nous ont décidés à continuer.</p></div>
+    <div class="section-head"><p class="eyebrow">Comment ça marche</p><h2>Trois étapes, et votre enfant commence</h2></div>
+    <div class="steps" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))">
+      <div class="step"><span class="when">Étape 1</span><h3>Vous vous inscrivez</h3><p>Deux minutes sur la page d'inscription : votre nom, votre WhatsApp, le prénom et l'âge de votre enfant, ce qui vous intéresse.</p></div>
+      <div class="step"><span class="when">Étape 2</span><h3>Nous vous rappelons sous 24 h</h3><p>On parle de votre enfant, de ses besoins, de l'emploi du temps. Puis il vient à un atelier ou un cours d'essai, sans engagement.</p></div>
+      <div class="step"><span class="when">Étape 3</span><h3>Il rejoint son groupe</h3><p>Vous suivez tout dans l'espace famille : séances faites et restantes, projets, retours mensuels de l'animateur.</p></div>
+    </div>
+    <div class="btn-row" style="margin-top:24px"><a class="btn btn-primary" href="inscription.html">Commencer l'inscription</a></div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:clamp(48px,7vw,88px)">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Pour qui</p><h2>De 7 à 18 ans, un groupe par âge</h2><p class="lead">Les ateliers suivent quatre niveaux ; les cours suivent la classe de l'enfant, du collège au lycée.</p></div>
+    <div class="grid grid-4">
+      <article class="card"><span class="pill">Ateliers · année 2</span><h3>Explorateurs</h3><p class="muted">7-9 ans</p><p>Premiers mécanismes et premiers programmes par blocs.</p></article>
+      <article class="card"><span class="pill pill-green">Ateliers · ouvert</span><h3>Bâtisseurs</h3><p class="muted">10-12 ans</p><p>LEGO SPIKE et micro:bit. Un objet qui fonctionne par trimestre.</p></article>
+      <article class="card"><span class="pill pill-green">Ateliers · ouvert</span><h3>Argumentateurs</h3><p class="muted">13-15 ans</p><p>Arduino, impression 3D, code, débats préparés.</p></article>
+      <article class="card"><span class="pill pill-green">Cours · ouvert</span><h3>Collège et lycée</h3><p class="muted">De la 6e à la terminale</p><p>Mathématiques, physique-chimie, sciences. Programmes marocain et français.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="section band-2" style="padding-top:clamp(48px,7vw,88px)">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Premiers retours</p><h2>Nous avons commencé, et les enfants en redemandent</h2><p class="lead">Avant d'ouvrir les inscriptions, nous avons interrogé des parents, réuni un premier groupe en atelier d'essai et tenu une première rencontre métiers.</p></div>
     <div class="facts">
       <div class="fact"><strong class="num">50</strong><span>parents interrogés avant d'écrire le programme</span></div>
       <div class="fact"><strong class="num">8</strong><span>enfants au premier atelier d'essai, 8 projets présentés à la fin</span></div>
       <div class="fact"><strong class="num">1</strong><span>première rencontre métiers tenue en visio, questions posées par les enfants</span></div>
-      <div class="fact"><strong class="num">10-16</strong><span>ans : l'âge des premiers inscrits sur la liste d'attente</span></div>
-    </div>
-    <p class="small muted" style="margin-top:14px">Chiffres mis à jour à chaque étape du lancement.</p>
-  </div>
-</section>
-
-<section class="section" style="padding-top:clamp(48px,7vw,88px)">
-  <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Un trimestre dans la vie de votre enfant</p><h2>Huit semaines, un projet, une démo</h2><p class="lead">Le même rythme toute l'année, pour qu'il sache toujours où il va et ce qu'on attend de lui.</p></div>
-    <div class="steps">
-      <div class="step"><span class="when">Semaine 1</span><h3>Il choisit son projet</h3><p>Trois projets proposés, adaptés à son âge. Il en choisit un, forme son binôme et décide de ce qu'il veut montrer à la démo.</p></div>
-      <div class="step"><span class="when">Semaines 2 à 7</span><h3>Il fabrique et il prépare</h3><p>Six séances de 2 h avec son groupe de 8 et un animateur. Il construit, programme, teste, recommence, et prépare sa présentation.</p></div>
-      <div class="step"><span class="when">Semaine 8</span><h3>Il présente devant les parents</h3><p>Cinq à huit minutes, seul, devant un public qui pose des questions. C'est le moment dont il se souvient.</p></div>
-      <div class="step"><span class="when">Chaque mois</span><h3>Vous savez où il en est</h3><p>Un retour écrit de l'animateur : ce qu'il a appris, où il progresse, où il bloque. Son projet rejoint son portfolio en ligne.</p></div>
-    </div>
-  </div>
-</section>
-
-<section class="section band-2" style="padding-top:clamp(48px,7vw,88px)">
-  <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Son groupe</p><h2>Un niveau par âge, jamais plus de 8</h2><p class="lead">Les projets, le vocabulaire et la durée des présentations changent avec l'âge. Chaque enfant travaille avec des enfants de son âge.</p></div>
-    <div class="grid grid-4">
-      <article class="card"><span class="pill">Année 2</span><h3>Explorateurs</h3><p class="muted">7-9 ans</p><p>Premiers mécanismes et premiers programmes par blocs. Présentations courtes, en binôme.</p></article>
-      <article class="card"><span class="pill pill-green">Ouvert au lancement</span><h3>Bâtisseurs</h3><p class="muted">10-12 ans</p><p>LEGO SPIKE et micro:bit. Un objet qui fonctionne par trimestre, présenté seul devant les parents.</p></article>
-      <article class="card"><span class="pill pill-green">Ouvert au lancement</span><h3>Argumentateurs</h3><p class="muted">13-15 ans</p><p>Arduino, impression 3D, code. Débats préparés, présentations argumentées, premières rencontres métiers.</p></article>
-      <article class="card"><span class="pill">Année 2</span><h3>Décideurs</h3><p class="muted">16-18 ans</p><p>Projets longs, prise de parole exigeante, bilan d'orientation et plan sur deux ans.</p></article>
-    </div>
-  </div>
-</section>
-
-<section class="section" style="padding-top:clamp(48px,7vw,88px)">
-  <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Ce qu'il garde</p><h2>À la fin de l'année, il a quelque chose à montrer</h2></div>
-    <div class="grid grid-3">
-      <article class="card"><h3>Son portfolio</h3><p>Chaque projet y entre avec des photos, la vidéo de sa démo et son carnet. Il le suit d'une année sur l'autre et pourra le montrer plus tard, à une école ou à un employeur.</p></article>
-      <article class="card"><h3>Ses badges</h3><p>Un badge par compétence acquise : programmer un capteur, souder, présenter sans notes, poser une question à un professionnel. Pas de classement entre enfants.</p></article>
-      <article class="card"><h3>Sa confiance</h3><p>Il a fabriqué un objet qui marche, il l'a présenté en public, il a parlé à des adultes de leur métier. La prochaine fois, il sait qu'il peut.</p></article>
-    </div>
-    <div class="btn-row" style="margin-top:24px"><a class="btn btn-secondary" href="parcours.html">Les parcours proposés</a></div>
-  </div>
-</section>
-
-<section class="section band" style="padding-top:clamp(48px,7vw,88px)">
-  <div class="wrap split">
-    <div>
-      <p class="eyebrow">Rencontres métiers</p>
-      <h2 style="margin-top:8px">Un professionnel, 45 minutes, et c'est votre enfant qui pose les questions</h2>
-      <p class="lead" style="margin-top:14px">Un ingénieur, un médecin, un avocat, un architecte, un entrepreneur raconte une journée de son travail, ce qu'il a choisi et ce qu'il referait autrement. Les enfants ont préparé leurs questions avant ; ce sont eux qui les posent.</p>
-      <div class="btn-row" style="margin-top:22px"><a class="btn btn-primary" href="metiers.html">Les prochaines rencontres</a><a class="btn btn-secondary" href="metiers.html#intervenir">Vous êtes professionnel ? Donnez une heure</a></div>
-    </div>
-    <div class="grid" style="gap:14px">
-      <div class="card"><h3>Avant</h3><p>Il prépare deux questions avec l'animateur.</p></div>
-      <div class="card"><h3>Pendant</h3><p>45 minutes de récit, puis 30 minutes où il pose ses questions lui-même. En visio au lancement, en présentiel ensuite.</p></div>
-      <div class="card"><h3>Après</h3><p>Il note dans son portfolio ce qu'il retient du métier, et s'il se voit le faire.</p></div>
+      <div class="fact"><strong class="num">10-16</strong><span>ans : l'âge des premiers inscrits</span></div>
     </div>
   </div>
 </section>
 
 <section class="section" style="padding-top:clamp(48px,7vw,88px)" id="securite">
   <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Il est en sécurité</p><h2>Quatre règles qui ne se discutent pas</h2></div>
+    <div class="section-head"><p class="eyebrow">Sécurité</p><h2>Quatre règles qui ne se discutent pas</h2></div>
     <div class="grid grid-4">
-      <article class="card"><h3>Assurance</h3><p>Responsabilité civile couvrant les mineurs, pour chaque séance, stage et sortie.</p></article>
-      <article class="card"><h3>Animateurs vérifiés</h3><p>Casier judiciaire demandé à chaque animateur et intervenant avant la première séance.</p></article>
+      <article class="card"><h3>Assurance</h3><p>Responsabilité civile couvrant les mineurs, pour chaque séance, cours, stage et sortie.</p></article>
+      <article class="card"><h3>Adultes vérifiés</h3><p>Casier judiciaire demandé à chaque animateur, enseignant et intervenant.</p></article>
       <article class="card"><h3>Jamais seul</h3><p>Un adulte n'est jamais seul avec un enfant. Deux adultes présents, portes ouvertes.</p></article>
       <article class="card"><h3>Protocole d'accueil</h3><p>Signé par les parents : qui dépose, qui récupère, qui appeler, autorisation ou non pour les photos.</p></article>
     </div>
@@ -190,23 +153,22 @@ PAGES["index.html"] = dict(title="Élan Académie", description="Académie en pr
   <div class="wrap">
     <div class="section-head"><p class="eyebrow">Questions fréquentes</p><h2>Ce que les parents demandent d'abord</h2></div>
     <div class="faq">
-      <details><summary>Mon enfant n'a jamais fait de robotique ni de programmation. Est-ce un problème ?</summary><p>Non. Les projets du premier trimestre partent de zéro. Ce qui compte, c'est la curiosité, pas le niveau de départ.</p></details>
-      <details><summary>Mon enfant est timide. La prise de parole va-t-elle le bloquer ?</summary><p>C'est souvent pour lui que ça compte le plus. On commence en binôme, trois minutes, devant le groupe seulement. La présentation devant les parents vient quand il est prêt. Personne n'est mis en difficulté en public.</p></details>
-      <details><summary>Quand ont lieu les séances ?</summary><p>Le samedi ou le mercredi, 2 heures par semaine, 32 séances sur l'année scolaire. Les horaires exacts sont confirmés avec les familles de la liste d'attente avant l'ouverture des groupes.</p></details>
-      <details><summary>Où se passent les ateliers ?</summary><p>À Casablanca, dans une salle louée les jours d'atelier, du côté d'Anfa ou de Maârif. L'adresse est communiquée aux familles inscrites.</p></details>
+      <details><summary>Mon enfant peut-il suivre les cours sans faire les ateliers, ou l'inverse ?</summary><p>Oui. Les quatre offres sont indépendantes. Beaucoup de familles commencent par l'une et ajoutent l'autre plus tard.</p></details>
+      <details><summary>Quand ont lieu les séances ?</summary><p>Les ateliers le samedi ou le mercredi (2 h). Les cours le soir en semaine ou le samedi (1 h 30 par matière). Les horaires exacts sont confirmés avec vous avant le début.</p></details>
+      <details><summary>Où se passent les ateliers et les cours ?</summary><p>À Casablanca, du côté d'Anfa ou de Maârif. L'adresse est communiquée aux familles inscrites.</p></details>
     </div>
     <div class="btn-row" style="margin-top:22px"><a class="btn btn-secondary" href="faq.html">Toutes les questions</a></div>
   </div>
 </section>
 
-{cta_band()}
+{cta_band(title="Inscrivez votre enfant", text="Deux minutes, sans engagement. Nous vous rappelons sous 24 h pour parler de votre enfant et fixer un atelier ou un cours d'essai.", primary=("inscription.html", "S'inscrire"))}
 ''')
 
 # ---------------------------------------------------------------- Programme
-PAGES["programme.html"] = dict(title="Programme", description="Le programme d'Élan Académie : trois piliers, un projet par trimestre, une démo toutes les huit semaines, quatre niveaux de 7 à 18 ans.", body=f'''
+PAGES["programme.html"] = dict(title="Ateliers robotique et sciences", description="Les ateliers d'Élan Académie : robotique, sciences, programmation et prise de parole, un projet par trimestre, une démo devant les parents toutes les huit semaines, quatre niveaux de 7 à 18 ans.", body=f'''
 <section class="section">
   <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Programme</p><h1>Un projet par trimestre, une démo devant les parents, un portfolio qui reste</h1><p class="lead">Le programme tient en trois piliers et un rythme fixe. Rien d'abstrait : à la fin de chaque trimestre, votre enfant a fabriqué quelque chose, l'a présenté en public et l'a rangé dans son portfolio.</p></div>
+    <div class="section-head"><p class="eyebrow">Ateliers robotique et sciences</p><h1>Un projet par trimestre, une démo devant les parents, un portfolio qui reste</h1><p class="lead">Le programme tient en trois piliers et un rythme fixe. Rien d'abstrait : à la fin de chaque trimestre, votre enfant a fabriqué quelque chose, l'a présenté en public et l'a rangé dans son portfolio.</p></div>
   </div>
 </section>
 
@@ -262,11 +224,12 @@ PAGES["programme.html"] = dict(title="Programme", description="Le programme d'É
 PAGES["parcours.html"] = dict(title="Les parcours", description="Les parcours d'Élan Académie : le parcours annuel, les stages intensifs, le bilan d'orientation et les rencontres métiers. Tout est pensé pour l'enfant.", body=f'''
 <section class="section">
   <div class="wrap">
-    <div class="section-head"><p class="eyebrow">Les parcours</p><h1>Quatre façons d'entrer, un seul objectif : que votre enfant avance</h1><p class="lead">Le parcours annuel est le cœur de l'académie. Les stages, les rencontres métiers et le bilan d'orientation permettent de commencer plus doucement, ou d'aller plus loin. Dans tous les cas, c'est l'enfant qui fait, qui présente et qui choisit.</p></div>
+    <div class="section-head"><p class="eyebrow">Les parcours</p><h1>Cinq façons d'entrer, un seul objectif : que votre enfant avance</h1><p class="lead">Le parcours annuel d'ateliers est le cœur de l'académie. Les cours de mathématiques et de physique, les stages, les rencontres métiers et le bilan d'orientation permettent de commencer autrement, ou d'aller plus loin. Dans tous les cas, c'est l'enfant qui fait, qui présente et qui choisit.</p></div>
     <div class="grid grid-2">
       <article class="card"><span class="pill pill-green">Le cœur de l'académie</span><h3>Le parcours annuel</h3><p>32 séances de 2 h sur l'année scolaire, le samedi ou le mercredi, en groupe de 8. Un projet par trimestre, une démo devant les parents toutes les huit semaines, les rencontres métiers, le portfolio et le retour mensuel.</p><ul class="checklist"><li>Quatre projets dans l'année, choisis par l'enfant</li><li>Quatre démos devant les parents</li><li>Une rencontre métiers par mois</li><li>Un portfolio en ligne et un retour écrit chaque mois</li><li>Un bilan de fin d'année avec vous</li></ul></article>
       <article class="card"><span class="pill">Vacances et été</span><h3>Le stage intensif</h3><p>Cinq jours, de 9 h à 15 h, sur un seul projet, du lundi au jeudi. Le vendredi, démo devant les parents. Une bonne façon de découvrir l'académie, ou de garder le rythme pendant les vacances.</p><ul class="checklist"><li>Groupe de 8, un animateur et un deuxième adulte</li><li>Un projet complet, rapporté à la maison quand c'est possible</li><li>Une présentation préparée avec l'intervenant expression</li></ul><a class="btn btn-secondary" href="stages.html" style="align-self:flex-start">Les stages en détail</a></article>
       <article class="card"><span class="pill">Ouvert à tous</span><h3>La rencontre métiers</h3><p>Un professionnel raconte une journée de son travail à un groupe de huit enfants, qui posent leurs questions. Incluse dans le parcours annuel, ouverte aux autres enfants à partir de 10 ans.</p><ul class="checklist"><li>45 minutes de récit, 30 minutes de questions</li><li>Les questions préparées par les enfants, posées par eux</li><li>En visio au lancement, en présentiel ensuite</li></ul><a class="btn btn-secondary" href="metiers.html" style="align-self:flex-start">Les prochaines rencontres</a></article>
+      <article class="card"><span class="pill pill-green">Collège et lycée</span><h3>Les cours de mathématiques et de physique</h3><p>Du collège au lycée, en groupe de 6 au maximum, 1 h 30 par semaine et par matière. On reprend le cours, on s'entraîne sur des exercices du niveau des contrôles, on apprend à réviser. Seuls ou en plus des ateliers.</p><ul class="checklist"><li>Mathématiques, physique-chimie, sciences</li><li>Programmes marocain et français</li><li>Retour mensuel écrit aux parents</li></ul><a class="btn btn-secondary" href="cours.html" style="align-self:flex-start">Les cours en détail</a></article>
       <article class="card"><span class="pill">14-18 ans</span><h3>Le bilan d'orientation</h3><p>Trois entretiens, des tests, un rapport écrit et un plan sur deux ans : quelles rencontres métiers prévoir, quelles filières regarder, quelles portes garder ouvertes. Avec le jeune d'abord, avec ses parents ensuite.</p><ul class="checklist"><li>Entretien 1 : le jeune seul, tests d'intérêts et de raisonnement</li><li>Entretien 2 : le jeune et ses parents, les filières possibles</li><li>Entretien 3 : le plan sur deux ans, un point à six mois inclus</li></ul></article>
     </div>
   </div>
@@ -287,6 +250,50 @@ PAGES["parcours.html"] = dict(title="Les parcours", description="Les parcours d'
 </section>
 
 {cta_band()}
+''')
+
+PAGES["cours.html"] = dict(title="Cours de mathématiques et de physique", description="Cours de mathématiques, de physique-chimie et de sciences à Casablanca, du collège au lycée, en groupe de 6 au maximum : reprendre le cours, s'entraîner, préparer les contrôles et les examens.", body=f'''
+<section class="section">
+  <div class="wrap split">
+    <div><p class="eyebrow">Cours de mathématiques et de physique</p><h1 style="margin-top:8px">Comprendre, s'entraîner, réussir ses contrôles</h1><p class="lead" style="margin-top:14px">Des cours de mathématiques, de physique-chimie et de sciences, du collège au lycée, en groupe de 6 au maximum. On part des contrôles et des devoirs de votre enfant, on reprend ce qui n'est pas compris, et on s'entraîne jusqu'à ce que ça tienne.</p><div class="btn-row" style="margin-top:22px"><a class="btn btn-primary" href="inscription.html">Inscrire mon enfant</a><a class="btn btn-secondary" data-wa="Bonjour, je souhaite des informations sur les cours de mathématiques et de physique d'Élan Académie." href="#">Poser une question</a></div></div>
+    <div class="card"><p class="eyebrow">En pratique</p><ul class="checklist"><li>Mathématiques, physique-chimie, sciences (SVT)</li><li>De la 6e à la terminale, programmes marocain et français</li><li>Groupe de 6 au maximum, même classe ou classes proches</li><li>1 h 30 par semaine et par matière, le soir en semaine ou le samedi</li><li>Un retour écrit aux parents chaque mois, comme pour les ateliers</li></ul></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Une séance type</p><h2>Une heure et demie, toujours dans le même ordre</h2></div>
+    <div class="steps">
+      <div class="step"><span class="when">20 minutes</span><h3>Reprendre le cours</h3><p>Ce que l'enfant n'a pas compris en classe cette semaine, expliqué autrement, avec des exemples.</p></div>
+      <div class="step"><span class="when">50 minutes</span><h3>S'entraîner</h3><p>Des exercices du niveau des contrôles, faits par l'enfant, corrigés avec lui. L'enseignant passe de l'un à l'autre.</p></div>
+      <div class="step"><span class="when">20 minutes</span><h3>Méthode</h3><p>Comment réviser, comment rédiger une copie, comment gérer son temps au contrôle. Ce qu'on n'apprend pas en classe.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section band" style="padding-top:clamp(48px,7vw,88px)">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Du collège au lycée</p><h2>Ce qu'on travaille, classe par classe</h2></div>
+    <div class="grid grid-3">
+      <article class="card"><span class="pill">6e · 5e · 4e</span><h3>Collège, premières années</h3><ul><li>Calcul, fractions, proportionnalité, premières équations</li><li>Géométrie et raisonnement</li><li>Physique-chimie : mesures, états de la matière, circuits</li></ul></article>
+      <article class="card"><span class="pill">3e · 2de</span><h3>Fin de collège, entrée au lycée</h3><ul><li>Équations, fonctions, statistiques</li><li>Préparation du brevet et de l'entrée en seconde</li><li>Physique : forces, énergie, électricité</li></ul></article>
+      <article class="card"><span class="pill">1re · Terminale</span><h3>Lycée et examens</h3><ul><li>Dérivées, suites, probabilités, géométrie dans l'espace</li><li>Physique-chimie du programme de terminale</li><li>Préparation du bac et des concours d'entrée</li></ul></article>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:clamp(48px,7vw,88px)">
+  <div class="wrap split">
+    <div><p class="eyebrow">Pourquoi chez Élan</p><h2 style="margin-top:8px">Des cours qui vont avec les ateliers</h2><p class="lead" style="margin-top:12px">Un enfant qui a construit un robot sait à quoi servent une équation et une mesure. Nos enseignants sont des étudiants ingénieurs et des professeurs, les mêmes règles de sécurité s'appliquent, et les parents reçoivent le même retour mensuel écrit. Les cours peuvent se suivre seuls, ou s'ajouter aux ateliers.</p></div>
+    <div class="grid" style="gap:14px">
+      <div class="card"><h3>Petits groupes</h3><p>Six au maximum, pour que chaque enfant fasse ses exercices lui-même et pose ses questions.</p></div>
+      <div class="card"><h3>Suivi dans l'espace famille</h3><p>Séances faites, absences, retour mensuel de l'enseignant, tout est visible en ligne.</p></div>
+      <div class="card"><h3>Avant les contrôles</h3><p>Des séances de révision supplémentaires avant le brevet, le bac et les examens de fin d'année.</p></div>
+    </div>
+  </div>
+</section>
+
+{cta_band(title="Inscrivez votre enfant aux cours", text="Dites-nous sa classe et les matières qui posent problème : nous vous rappelons sous 24 h et nous lui proposons un cours d'essai.", primary=("inscription.html", "S'inscrire"))}
 ''')
 
 # ---------------------------------------------------------------- Rencontres métiers
@@ -393,7 +400,7 @@ PAGES["stages.html"] = dict(title="Stages intensifs", description="Stages intens
 PAGES["a-propos.html"] = dict(title="À propos", description="Qui est derrière Élan Académie : un ingénieur généraliste à Casablanca, une méthode, une équipe d'animateurs étudiants ingénieurs, quatre règles de sécurité.", body=f'''
 <section class="section">
   <div class="wrap split">
-    <div><p class="eyebrow">À propos</p><h1 style="margin-top:8px">Pourquoi Élan Académie existe</h1><p class="lead" style="margin-top:14px">Nos enfants savent avoir des notes. Ils savent rarement fabriquer quelque chose de concret, le défendre devant un public, ou expliquer pourquoi ils veulent faire tel métier plutôt qu'un autre. Ces trois choses se travaillent, comme le reste. C'est ce que nous faisons, en groupes de 8, le samedi ou le mercredi.</p></div>
+    <div><p class="eyebrow">À propos</p><h1 style="margin-top:8px">Pourquoi Élan Académie existe</h1><p class="lead" style="margin-top:14px">Nos enfants savent avoir des notes. Ils savent rarement fabriquer quelque chose de concret, le défendre devant un public, ou expliquer pourquoi ils veulent faire tel métier plutôt qu'un autre. Ces trois choses se travaillent, comme le reste. C'est ce que nous faisons dans les ateliers, en groupes de 8. Et parce que les notes restent la porte d'entrée, nous donnons aussi des cours de mathématiques et de physique, en groupes de 6.</p></div>
     <div class="card"><p class="eyebrow">Le fondateur</p><h3>Yassine, ingénieur généraliste</h3><p>Diplômé d'une école d'ingénieurs généraliste, il a monté Élan Académie après avoir constaté que ce qui l'avait le plus servi dans ses études et son métier (fabriquer, présenter, choisir) ne s'apprenait nulle part avant 20 ans. Il conçoit le programme, recrute les animateurs et anime lui-même les premiers groupes.</p><a class="btn btn-secondary" data-linkedin href="#" target="_blank" rel="noopener" style="align-self:flex-start">Suivre sur LinkedIn</a></div>
   </div>
 </section>
@@ -457,12 +464,12 @@ PAGES["inscription.html"] = dict(title="Liste d'attente", description="Inscrivez
   <div class="wrap split" style="align-items:start">
     <div>
       <p class="eyebrow">Liste d'attente</p>
-      <h1 style="margin-top:8px">Inscrivez votre enfant sur la liste d'attente</h1>
-      <p class="lead" style="margin-top:14px">Sans engagement. Vous recevez une réponse personnelle sous 24 h sur WhatsApp, puis les dates des rencontres métiers en visio et des ateliers d'essai, avant tout le monde.</p>
+      <h1 style="margin-top:8px">Inscrivez votre enfant</h1>
+      <p class="lead" style="margin-top:14px">Ateliers, cours, rencontres métiers ou stage : dites-nous ce qui vous intéresse. Sans engagement. Vous recevez une réponse personnelle sous 24 h sur WhatsApp, puis une invitation à un atelier ou un cours d'essai.</p>
       <div class="steps" style="grid-template-columns:1fr;margin-top:28px">
         <div class="step"><span class="when">Sous 24 h</span><h3>Une réponse personnelle</h3><p>Le fondateur vous répond lui-même sur WhatsApp, et répond à vos questions.</p></div>
         <div class="step"><span class="when">Ensuite</span><h3>Une rencontre métiers en visio</h3><p>Votre enfant assiste gratuitement à une première rencontre métiers, pour voir comment ça se passe.</p></div>
-        <div class="step"><span class="when">Puis</span><h3>Un atelier d'essai à Casablanca</h3><p>2 h en groupe de 8, avec une courte présentation à la fin. Vous décidez après, pas avant.</p></div>
+        <div class="step"><span class="when">Puis</span><h3>Un atelier ou un cours d'essai à Casablanca</h3><p>Votre enfant vient une fois, sans engagement. Vous décidez après, pas avant.</p></div>
       </div>
       <p class="notice" style="margin-top:20px">Vous préférez écrire directement ? WhatsApp <strong data-wa-number></strong> ou <span data-email></span>.</p>
     </div>
@@ -477,7 +484,7 @@ PAGES["inscription.html"] = dict(title="Liste d'attente", description="Inscrivez
           <div class="field"><label for="enfant">Prénom de votre enfant</label><input id="enfant" name="enfant" type="text" required></div>
           <div class="field"><label for="age">Son âge</label><input id="age" name="age" type="number" inputmode="numeric" min="7" max="18" required></div>
         </div>
-        <div class="field"><label for="interet">Ce qui vous intéresse</label><select id="interet" name="interet"><option value="">Choisir</option><option>Le parcours annuel (samedi ou mercredi)</option><option>Un stage intensif pendant les vacances</option><option>Une rencontre métiers</option><option>Le bilan d'orientation (14-18 ans)</option><option>Je ne sais pas encore</option></select></div>
+        <div class="field"><label for="interet">Ce qui vous intéresse</label><select id="interet" name="interet"><option value="">Choisir</option><option>Les ateliers robotique et sciences (samedi ou mercredi)</option><option>Les cours de mathématiques et de physique</option><option>Les ateliers et les cours</option><option>Un stage intensif pendant les vacances</option><option>Une rencontre métiers</option><option>Le bilan d'orientation (14-18 ans)</option><option>Je ne sais pas encore</option></select></div>
         <div class="row">
           <div class="field"><label for="quartier">Votre quartier</label><input id="quartier" name="quartier" type="text" placeholder="Anfa, Californie, Bouskoura…"><span class="hint">Facultatif. Pour choisir la salle.</span></div>
           <div class="field"><label for="source">Comment nous avez-vous connus ?</label><select id="source" name="source"><option value="">Choisir</option><option>Par un parent</option><option>Instagram ou Facebook</option><option>LinkedIn</option><option>L'école de mon enfant</option><option>Une rencontre métiers</option><option>Autre</option></select></div>
@@ -499,6 +506,9 @@ PAGES["inscription.html"] = dict(title="Liste d'attente", description="Inscrivez
     </div>
   </div>
 </section>
+<div class="modal" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="modal-titre" hidden>
+  <div class="modal-box"><div class="check" aria-hidden="true">✓</div><h2 id="modal-titre">Vos informations ont bien été enregistrées</h2><p id="modal-texte">Merci. Nous vous répondons sous 24 h sur WhatsApp.</p><div class="btn-row"><button class="btn btn-primary" type="button" data-modal-close>Continuer</button></div></div>
+</div>
 ''')
 
 # ---------------------------------------------------------------- FAQ
@@ -507,7 +517,8 @@ PAGES["faq.html"] = dict(title="Questions fréquentes", description="Les répons
   <div class="wrap">
     <div class="section-head"><p class="eyebrow">Questions fréquentes</p><h1>Ce que les parents nous demandent</h1><p class="lead">Si votre question n'est pas là, écrivez-nous sur WhatsApp : la réponse arrive dans la journée.</p></div>
     <div class="faq">
-      <details open><summary>À partir de quel âge ?</summary><p>Au lancement, deux groupes : Bâtisseurs (10-12 ans) et Argumentateurs (13-15 ans). Les Explorateurs (7-9 ans) et les Décideurs (16-18 ans) ouvrent la deuxième année. Les stages d'été accueillent les 10-15 ans.</p></details>
+      <details open><summary>Que proposez-vous exactement ?</summary><p>Quatre choses : des ateliers de robotique et de sciences (un projet par trimestre, présenté devant les parents), des cours de mathématiques et de physique du collège au lycée, des rencontres avec des professionnels, et des stages pendant les vacances. Chaque offre se suit seule ou avec les autres.</p></details>
+      <details><summary>À partir de quel âge ?</summary><p>Au lancement, deux groupes : Bâtisseurs (10-12 ans) et Argumentateurs (13-15 ans). Les Explorateurs (7-9 ans) et les Décideurs (16-18 ans) ouvrent la deuxième année. Les stages d'été accueillent les 10-15 ans.</p></details>
       <details><summary>Mon enfant n'a jamais fait de robotique ni de programmation. Est-ce un problème ?</summary><p>Non. Les projets du premier trimestre partent de zéro, et les groupes mélangent les niveaux de départ. Ce qui compte, c'est la curiosité et l'envie de finir ce qu'on commence.</p></details>
       <details><summary>Quand ont lieu les séances ?</summary><p>Le samedi ou le mercredi, 2 heures par semaine, 32 séances sur l'année scolaire, hors vacances. Les horaires exacts sont confirmés avec les familles de la liste d'attente avant l'ouverture des groupes.</p></details>
       <details><summary>Où se passent les ateliers ?</summary><p>À Casablanca, dans une salle louée les jours d'atelier, du côté d'Anfa ou de Maârif. L'adresse est communiquée aux familles inscrites. Les premières rencontres métiers ont lieu en visio.</p></details>
@@ -519,6 +530,7 @@ PAGES["faq.html"] = dict(title="Questions fréquentes", description="Les répons
       <details><summary>Mon enfant est timide. La prise de parole va-t-elle le bloquer ?</summary><p>C'est souvent pour lui que ça compte le plus. On commence en binôme, trois minutes, devant le groupe seulement. La présentation devant les parents vient après, quand il est prêt. Personne n'est mis en difficulté en public.</p></details>
       <details><summary>Les parents peuvent-ils assister aux séances ?</summary><p>Aux démos, oui, c'est fait pour ça. Aux séances ordinaires, non : les enfants travaillent mieux sans public. Vous recevez un retour écrit chaque mois.</p></details>
       <details><summary>Prenez-vous des photos des enfants ?</summary><p>Uniquement avec votre autorisation écrite, dans le protocole d'accueil. Sans elle, aucune image de votre enfant n'est publiée, et les démos sont filmées sur les projets, pas sur les visages.</p></details>
+      <details><summary>Comment se passent les cours de mathématiques et de physique ?</summary><p>En groupe de 6 au maximum, 1 h 30 par semaine et par matière, le soir en semaine ou le samedi. Chaque séance reprend le cours, fait travailler des exercices du niveau des contrôles et apprend une méthode. Le détail est sur la page <a href="cours.html">Cours</a>.</p></details>
       <details><summary>Proposez-vous un club dans les écoles ?</summary><p>Oui, une version allégée du parcours, 1 h 30 par semaine dans l'école, avec notre matériel et notre animateur. Les écoles intéressées peuvent nous écrire.</p></details>
     </div>
   </div>

@@ -7,7 +7,10 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var sb = null, session = null, profile = null;
 
-  var LEVELS = { explorateurs: "Explorateurs · 7-9 ans", batisseurs: "Bâtisseurs · 10-12 ans", argumentateurs: "Argumentateurs · 13-15 ans", decideurs: "Décideurs · 16-18 ans" };
+  var LEVELS = { explorateurs: "Explorateurs · 7-9 ans", batisseurs: "Bâtisseurs · 10-12 ans", argumentateurs: "Argumentateurs · 13-15 ans", decideurs: "Décideurs · 16-18 ans", college: "Cours · collège", lycee: "Cours · lycée" };
+  var ATELIER_LEVELS = { explorateurs: LEVELS.explorateurs, batisseurs: LEVELS.batisseurs, argumentateurs: LEVELS.argumentateurs, decideurs: LEVELS.decideurs };
+  var KINDS = { atelier: "Atelier", cours: "Cours" };
+  var CLASSES = ["6e", "5e", "4e", "3e", "2de", "1re", "Terminale"];
   var FAMILY_STATUS = { liste_attente: "Liste d'attente", essai_planifie: "Essai planifié", inscrit: "Inscrit", parti: "Parti" };
   var CHILD_STATUS = { essai: "Essai", inscrit: "Inscrit", parti: "Parti" };
   var WAIT_STATUS = { nouveau: "Nouveau", contacte: "Contacté", essai_planifie: "Essai planifié", inscrit: "Inscrit", sans_suite: "Sans suite" };
@@ -71,6 +74,7 @@
   }
 
   function showAuthForm(which) {
+    $("#auth-card").hidden = false;
     $("#form-login").hidden = which !== "login";
     $("#form-signup").hidden = which !== "signup";
     $("#form-reset").hidden = which !== "reset";
@@ -78,7 +82,7 @@
   }
 
   function bindAuth() {
-    $$(".tab").forEach(function (t) { t.addEventListener("click", function () { showAuthForm(t.getAttribute("data-tab")); }); });
+    $$(".tab, [data-auth]").forEach(function (t) { t.addEventListener("click", function () { showAuthForm(t.getAttribute("data-tab") || t.getAttribute("data-auth")); var card = $("#auth-card"); if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth", block: "start" }); }); });
     $("#form-login").addEventListener("submit", async function (e) {
       e.preventDefault(); $("#login-error").textContent = "";
       var r = await sb.auth.signInWithPassword({ email: $("#login-email").value.trim(), password: $("#login-password").value });
@@ -153,21 +157,27 @@
 
   // ---------------------------------------------------------------- chargements communs
   async function loadChildrenWithProgress(filter) {
-    var qb = sb.from("children").select("*, families(id, parent_name, phone, email, quartier, status), groups(id, name, level, day, start_time, animateur_id)").order("first_name");
+    var qb = sb.from("children").select("*, families(id, parent_name, phone, email, quartier, status), groups:groups!children_group_id_fkey(id, name, kind, level, day, start_time, animateur_id), course_group:groups!children_course_group_id_fkey(id, name, kind, level, day, start_time, animateur_id)").order("first_name");
     if (filter) qb = filter(qb);
     var kids = await q(qb);
     var prog = await q(sb.from("child_progress").select("*"));
     var map = {}; prog.forEach(function (p) { map[p.child_id] = p; });
-    kids.forEach(function (k) { k.progress = map[k.id] || { sessions_done: 0, sessions_missed: 0, sessions_remaining: k.sessions_planned, sessions_planned: k.sessions_planned }; });
+    kids.forEach(function (k) { k.progress = map[k.id] || { sessions_done: 0, sessions_missed: 0, sessions_remaining: k.sessions_planned, sessions_planned: k.sessions_planned, course_done: 0, course_missed: 0, course_remaining: k.course_sessions_planned, course_sessions_planned: k.course_sessions_planned }; });
     return kids;
   }
-  function progressHtml(k) {
-    var p = k.progress, planned = p.sessions_planned || k.sessions_planned || C.sessionsPlanned || 32;
-    var pct = planned ? Math.min(100, Math.round(100 * p.sessions_done / planned)) : 0;
-    return '<div class="progress"><i style="width:' + pct + '%"></i></div><div class="progress-label"><span>' + p.sessions_done + " séance" + (p.sessions_done > 1 ? "s" : "") + " faite" + (p.sessions_done > 1 ? "s" : "") + "</span><span>" + p.sessions_remaining + " restante" + (p.sessions_remaining > 1 ? "s" : "") + " sur " + planned + "</span></div>";
+  function bar(label, done, remaining, planned) {
+    var pct = planned ? Math.min(100, Math.round(100 * done / planned)) : 0;
+    return '<div class="progress-block"><div class="muted-sm" style="margin-bottom:4px">' + esc(label) + '</div><div class="progress"><i style="width:' + pct + '%"></i></div><div class="progress-label"><span>' + done + " séance" + (done > 1 ? "s" : "") + " faite" + (done > 1 ? "s" : "") + "</span><span>" + remaining + " restante" + (remaining > 1 ? "s" : "") + " sur " + planned + "</span></div></div>";
   }
+  function progressHtml(k) {
+    var p = k.progress, out = "";
+    if (k.group_id || p.sessions_done) out += bar("Ateliers", p.sessions_done, p.sessions_remaining, p.sessions_planned || k.sessions_planned || C.sessionsPlanned || 32);
+    if (k.course_group_id || p.course_done) out += bar("Cours", p.course_done || 0, p.course_remaining == null ? (k.course_sessions_planned || 30) : p.course_remaining, p.course_sessions_planned || k.course_sessions_planned || 30);
+    return out || '<p class="muted-sm">Pas encore de groupe.</p>';
+  }
+  function groupLabel(g, prefix) { return g ? (prefix || "") + g.name + (g.day ? " · " + g.day + (g.start_time ? " " + g.start_time : "") : "") : ""; }
   function childRow(k, showFamily) {
-    var meta = [LEVELS[k.level] || "", k.groups ? "Groupe " + k.groups.name + (k.groups.day ? " · " + k.groups.day + (k.groups.start_time ? " " + k.groups.start_time : "") : "") : "Sans groupe", CHILD_STATUS[k.status] || ""];
+    var meta = [LEVELS[k.level] || "", k.school_class ? "Classe de " + k.school_class : "", k.groups ? groupLabel(k.groups, "Atelier ") : "", k.course_group ? groupLabel(k.course_group, "Cours ") : "", (!k.groups && !k.course_group) ? "Sans groupe" : "", CHILD_STATUS[k.status] || ""];
     if (showFamily && k.families) meta.push("Famille " + k.families.parent_name);
     return '<div class="row-card"><div><div class="title">' + esc(k.first_name) + (k.age ? " · " + k.age + " ans" : "") + '</div><div class="meta">' + meta.filter(Boolean).map(esc).join(" · ") + "</div>" + progressHtml(k) + '</div><div class="actions"><a class="btn btn-secondary btn-sm" href="#enfant/' + k.id + '">Fiche</a></div></div>';
   }
@@ -180,7 +190,7 @@
     var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
     var sessions = await q(sb.from("sessions").select("id, session_date, groups(name)").gte("session_date", todayISO()).lte("session_date", weekEnd.toISOString().slice(0, 10)).order("session_date"));
     var inscrits = kids.filter(function (k) { return k.status === "inscrit"; });
-    var late = inscrits.filter(function (k) { return (k.progress.last_report_month || "") < prevMonthKey() && k.progress.sessions_done > 0; });
+    var late = inscrits.filter(function (k) { return (k.progress.last_report_month || "") < prevMonthKey() && ((k.progress.sessions_done || 0) + (k.progress.course_done || 0)) > 0; });
     var count = function (arr, st) { return arr.filter(function (x) { return x.status === st; }).length; };
     var html = pageHead("Tableau de bord", "Où en est l'académie aujourd'hui.");
     html += '<div class="stat-grid">' +
@@ -223,7 +233,8 @@
   }
   function childForm(k, groups, familyId) {
     k = k || {};
-    return '<form class="form" data-child-form="' + (k.id || "") + '" data-family="' + (familyId || k.family_id) + '"><div class="row">' + field("Prénom", input("first_name", k.first_name, "text", "required")) + field("Âge", input("age", k.age, "number", 'min="5" max="20"')) + field("Niveau", '<select name="level">' + options(LEVELS, k.level, "Choisir") + "</select>") + "</div><div class=\"row\">" + field("Groupe", '<select name="group_id">' + optionsFrom(groups, k.group_id, function (g) { return g.name + " · " + (LEVELS[g.level] || g.level); }, "Pas encore de groupe") + "</select>") + field("Séances prévues", input("sessions_planned", k.sessions_planned || C.sessionsPlanned || 32, "number", 'min="1"')) + field("Statut", '<select name="status">' + options(CHILD_STATUS, k.status || "essai") + "</select>") + "</div>" + field("Notes", textarea("notes", k.notes, 2)) + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>';
+    var ateliers = groups.filter(function (g) { return g.kind !== "cours"; }), cours = groups.filter(function (g) { return g.kind === "cours"; });
+    return '<form class="form" data-child-form="' + (k.id || "") + '" data-family="' + (familyId || k.family_id) + '"><div class="row">' + field("Prénom", input("first_name", k.first_name, "text", "required")) + field("Âge", input("age", k.age, "number", 'min="5" max="20"')) + field("Niveau d'atelier", '<select name="level">' + options(ATELIER_LEVELS, k.level, "Choisir") + "</select>") + field("Classe (cours)", '<select name="school_class"><option value="">Choisir</option>' + CLASSES.map(function (c) { return '<option' + (k.school_class === c ? " selected" : "") + ">" + c + "</option>"; }).join("") + "</select>") + "</div><div class=\"row\">" + field("Groupe d'atelier", '<select name="group_id">' + optionsFrom(ateliers, k.group_id, function (g) { return g.name + " · " + (LEVELS[g.level] || g.level); }, "Pas d'atelier") + "</select>") + field("Séances d'atelier prévues", input("sessions_planned", k.sessions_planned || C.sessionsPlanned || 32, "number", 'min="1"')) + "</div><div class=\"row\">" + field("Groupe de cours", '<select name="course_group_id">' + optionsFrom(cours, k.course_group_id, function (g) { return g.name + " · " + (LEVELS[g.level] || g.level); }, "Pas de cours") + "</select>") + field("Séances de cours prévues", input("course_sessions_planned", k.course_sessions_planned || 30, "number", 'min="1"')) + field("Statut", '<select name="status">' + options(CHILD_STATUS, k.status || "essai") + "</select>") + "</div>" + field("Notes", textarea("notes", k.notes, 2)) + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>';
   }
   function bindFamilyForms() {
     $$("[data-family-form]").forEach(function (f) { f.addEventListener("submit", async function (e) {
@@ -235,7 +246,7 @@
     }); });
     $$("[data-child-form]").forEach(function (f) { f.addEventListener("submit", async function (e) {
       e.preventDefault(); var v = readForm(f); var id = f.getAttribute("data-child-form");
-      var payload = { family_id: f.getAttribute("data-family"), first_name: v.first_name, age: v.age ? +v.age : null, level: nullIfEmpty(v.level), group_id: nullIfEmpty(v.group_id), sessions_planned: +v.sessions_planned || 32, status: v.status, notes: nullIfEmpty(v.notes) };
+      var payload = { family_id: f.getAttribute("data-family"), first_name: v.first_name, age: v.age ? +v.age : null, level: nullIfEmpty(v.level), school_class: nullIfEmpty(v.school_class), group_id: nullIfEmpty(v.group_id), sessions_planned: +v.sessions_planned || 32, course_group_id: nullIfEmpty(v.course_group_id), course_sessions_planned: +v.course_sessions_planned || 30, status: v.status, notes: nullIfEmpty(v.notes) };
       if (!payload.first_name) { toast("Le prénom est obligatoire.", true); return; }
       if (id) await q(sb.from("children").update(payload).eq("id", id)); else await q(sb.from("children").insert(payload));
       toast("Enfant enregistré."); route();
@@ -272,9 +283,9 @@
     var groups = await q(sb.from("groups").select("id, name").order("name"));
     var html = pageHead(roleIs("admin") ? "Enfants" : "Mes enfants", kids.length + " enfant" + (kids.length > 1 ? "s" : "") + ".");
     html += '<div class="toolbar"><input type="search" id="kid-search" placeholder="Rechercher un prénom"><select id="kid-group"><option value="">Tous les groupes</option>' + optionsFrom(groups, "", function (g) { return g.name; }) + '</select><select id="kid-status"><option value="">Tous les statuts</option>' + options(CHILD_STATUS) + "</select></div>";
-    html += '<div class="list">' + (kids.length ? kids.map(function (k) { return '<div data-kid-row data-text="' + esc(k.first_name.toLowerCase()) + '" data-group="' + (k.group_id || "") + '" data-status="' + k.status + '">' + childRow(k, roleIs("admin")) + "</div>"; }).join("") : '<div class="empty">Aucun enfant. Créez d\'abord une famille, puis ajoutez ses enfants.</div>') + "</div>";
+    html += '<div class="list">' + (kids.length ? kids.map(function (k) { return '<div data-kid-row data-text="' + esc(k.first_name.toLowerCase()) + '" data-group="' + (k.group_id || "") + " " + (k.course_group_id || "") + '" data-status="' + k.status + '">' + childRow(k, roleIs("admin")) + "</div>"; }).join("") : '<div class="empty">Aucun enfant. Créez d\'abord une famille, puis ajoutez ses enfants.</div>') + "</div>";
     setTimeout(function () {
-      var filter = function () { var s = $("#kid-search").value.toLowerCase(), g = $("#kid-group").value, st = $("#kid-status").value; $$("[data-kid-row]").forEach(function (r) { r.hidden = (s && r.getAttribute("data-text").indexOf(s) < 0) || (g && r.getAttribute("data-group") !== g) || (st && r.getAttribute("data-status") !== st); }); };
+      var filter = function () { var s = $("#kid-search").value.toLowerCase(), g = $("#kid-group").value, st = $("#kid-status").value; $$("[data-kid-row]").forEach(function (r) { r.hidden = (s && r.getAttribute("data-text").indexOf(s) < 0) || (g && r.getAttribute("data-group").indexOf(g) < 0) || (st && r.getAttribute("data-status") !== st); }); };
       ["#kid-search", "#kid-group", "#kid-status"].forEach(function (id) { $(id).addEventListener("input", filter); $(id).addEventListener("change", filter); });
     }, 0);
     return html;
@@ -287,8 +298,9 @@
     var reports = await q(sb.from("monthly_reports").select("*").eq("child_id", k.id).order("month", { ascending: false }));
     var badges = await q(sb.from("badges").select("*").eq("child_id", k.id).order("awarded_at", { ascending: false }));
     var canEdit = roleIs("admin") || roleIs("animateur");
-    var html = '<div class="card"><div class="page-head"><div><p class="eyebrow">' + esc(LEVELS[k.level] || "Enfant") + "</p><h2>" + esc(k.first_name) + (k.age ? " · " + k.age + " ans" : "") + '</h2><p>' + (k.groups ? "Groupe " + esc(k.groups.name) + (k.groups.day ? ", le " + esc(k.groups.day) + (k.groups.start_time ? " à " + esc(k.groups.start_time) : "") : "") : "Pas encore de groupe") + (roleIs("admin") && k.families ? " · Famille " + esc(k.families.parent_name) : "") + "</p></div>" + (canEdit ? '<span class="pill' + (k.status === "inscrit" ? " pill-green" : "") + '">' + esc(CHILD_STATUS[k.status]) + "</span>" : "") + "</div>";
-    html += progressHtml(k) + (k.progress.sessions_missed ? '<p class="muted-sm" style="margin-top:6px">' + k.progress.sessions_missed + " absence" + (k.progress.sessions_missed > 1 ? "s" : "") + "</p>" : "");
+    var html = '<div class="card"><div class="page-head"><div><p class="eyebrow">' + esc(LEVELS[k.level] || "Enfant") + "</p><h2>" + esc(k.first_name) + (k.age ? " · " + k.age + " ans" : "") + (k.school_class ? " · " + esc(k.school_class) : "") + '</h2><p>' + esc([k.groups ? groupLabel(k.groups, "Atelier ") : "", k.course_group ? groupLabel(k.course_group, "Cours ") : ""].filter(Boolean).join(" · ") || "Pas encore de groupe") + (roleIs("admin") && k.families ? " · Famille " + esc(k.families.parent_name) : "") + "</p></div>" + (canEdit ? '<span class="pill' + (k.status === "inscrit" ? " pill-green" : "") + '">' + esc(CHILD_STATUS[k.status]) + "</span>" : "") + "</div>";
+    var missed = (k.progress.sessions_missed || 0) + (k.progress.course_missed || 0);
+    html += progressHtml(k) + (missed ? '<p class="muted-sm" style="margin-top:6px">' + missed + " absence" + (missed > 1 ? "s" : "") + "</p>" : "");
     html += '<div class="detail-grid" style="margin-top:12px">';
     // projets et badges
     html += '<div><h3>Projets et démos</h3>' + (projects.length ? '<div class="list" style="margin-top:8px">' + projects.map(function (p) { return '<div class="row-card"><div><div class="title">' + esc(p.title) + ' <span class="pill' + (p.status === "presente" ? " pill-green" : "") + '">' + (p.status === "presente" ? "Présenté" : "En cours") + '</span></div><div class="meta">' + [p.term, p.demo_date ? "Démo le " + fmtDate(p.demo_date) : ""].filter(Boolean).map(esc).join(" · ") + (p.link ? ' · <a href="' + esc(p.link) + '" target="_blank" rel="noopener">voir</a>' : "") + "</div></div>" + (canEdit && p.status !== "presente" ? '<div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-project-done="' + p.id + '">Marquer présenté</button></div>' : "") + "</div>"; }).join("") + "</div>" : '<p class="muted">Aucun projet encore. Le premier commence à la première séance du trimestre.</p>');
@@ -322,28 +334,28 @@
 
   // ---------------------------------------------------------------- ADMIN : groupes
   VIEWS.groupes = async function () {
-    var groups = await q(sb.from("groups").select("*, children(id)").order("name"));
+    var groups = await q(sb.from("groups").select("*, children:children!children_group_id_fkey(id), course_children:children!children_course_group_id_fkey(id)").order("name"));
     var team = await q(sb.from("profiles").select("id, full_name, email, role").eq("role", "animateur").order("full_name"));
     var animLabel = function (id) { var a = team.find(function (t) { return t.id === id; }); return a ? (a.full_name || a.email) : "Sans animateur"; };
-    var form = function (g) { g = g || {}; return '<form class="form" data-group-form="' + (g.id || "") + '"><div class="row">' + field("Nom du groupe", input("name", g.name, "text", 'required placeholder="Bâtisseurs samedi 10 h"')) + field("Niveau", '<select name="level">' + options(LEVELS, g.level || "batisseurs") + "</select>") + "</div><div class=\"row\">" + field("Jour", '<select name="day">' + DAYS.map(function (d) { return '<option value="' + d + '"' + (g.day === d ? " selected" : "") + ">" + d + "</option>"; }).join("") + "</select>") + field("Heure de début", input("start_time", g.start_time, "text", 'placeholder="10 h"')) + field("Animateur", '<select name="animateur_id">' + optionsFrom(team, g.animateur_id, function (t) { return t.full_name || t.email; }, "À attribuer") + "</select>") + "</div>" + field("Groupe actif", '<label class="muted-sm"><input type="checkbox" name="active"' + (g.active !== false ? " checked" : "") + "> Les groupes inactifs disparaissent des listes</label>") + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>'; };
+    var form = function (g) { g = g || {}; return '<form class="form" data-group-form="' + (g.id || "") + '"><div class="row">' + field("Nom du groupe", input("name", g.name, "text", 'required placeholder="Bâtisseurs samedi 10 h"')) + field("Type", '<select name="kind">' + options(KINDS, g.kind || "atelier") + "</select>") + field("Niveau", '<select name="level">' + options(LEVELS, g.level || "batisseurs") + "</select>", "Ateliers : Explorateurs à Décideurs. Cours : collège ou lycée.") + "</div><div class=\"row\">" + field("Jour", '<select name="day">' + DAYS.map(function (d) { return '<option value="' + d + '"' + (g.day === d ? " selected" : "") + ">" + d + "</option>"; }).join("") + "</select>") + field("Heure de début", input("start_time", g.start_time, "text", 'placeholder="10 h"')) + field("Animateur", '<select name="animateur_id">' + optionsFrom(team, g.animateur_id, function (t) { return t.full_name || t.email; }, "À attribuer") + "</select>") + "</div>" + field("Groupe actif", '<label class="muted-sm"><input type="checkbox" name="active"' + (g.active !== false ? " checked" : "") + "> Les groupes inactifs disparaissent des listes</label>") + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>'; };
     var html = pageHead("Groupes", "Un groupe = un niveau, un jour, un animateur, 8 enfants au maximum.", '<button class="btn btn-primary" type="button" data-toggle="new-group">Nouveau groupe</button>');
     html += '<div class="inline-form" id="new-group" hidden><h3>Nouveau groupe</h3>' + form() + "</div>";
     if (!team.length) html += '<p class="notice">Aucun animateur pour l\'instant : l\'animateur crée son compte sur cette page, puis vous lui donnez le rôle « Animateur » dans l\'onglet Équipe.</p>';
-    html += '<div class="list">' + (groups.length ? groups.map(function (g) { var n = (g.children || []).length; return '<div class="row-card"><div><div class="title">' + esc(g.name) + (g.active ? "" : ' <span class="pill">Inactif</span>') + (n >= 8 ? ' <span class="pill">Complet</span>' : "") + '</div><div class="meta">' + [LEVELS[g.level], g.day ? g.day + (g.start_time ? " " + g.start_time : "") : "", animLabel(g.animateur_id), n + " enfant" + (n > 1 ? "s" : "") + " sur 8"].filter(Boolean).map(esc).join(" · ") + '</div><div id="grp-' + g.id + '" hidden><div class="inline-form" style="margin-top:12px">' + form(g) + '</div></div></div><div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-toggle="grp-' + g.id + '">Modifier</button></div></div>'; }).join("") : '<div class="empty">Aucun groupe. Commencez par Bâtisseurs (10-12 ans) et Argumentateurs (13-15 ans).</div>') + "</div>";
+    html += '<div class="list">' + (groups.length ? groups.map(function (g) { var n = (g.kind === "cours" ? (g.course_children || []) : (g.children || [])).length; var max = g.kind === "cours" ? 6 : 8; return '<div class="row-card"><div><div class="title">' + esc(g.name) + ' <span class="pill' + (g.kind === "cours" ? "" : " pill-green") + '">' + esc(KINDS[g.kind] || "Atelier") + "</span>" + (g.active ? "" : ' <span class="pill">Inactif</span>') + (n >= max ? ' <span class="pill">Complet</span>' : "") + '</div><div class="meta">' + [LEVELS[g.level], g.day ? g.day + (g.start_time ? " " + g.start_time : "") : "", animLabel(g.animateur_id), n + " enfant" + (n > 1 ? "s" : "") + " sur " + max].filter(Boolean).map(esc).join(" · ") + '</div><div id="grp-' + g.id + '" hidden><div class="inline-form" style="margin-top:12px">' + form(g) + '</div></div></div><div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-toggle="grp-' + g.id + '">Modifier</button></div></div>'; }).join("") : '<div class="empty">Aucun groupe. Commencez par un atelier Bâtisseurs (10-12 ans), un atelier Argumentateurs (13-15 ans) et un groupe de cours collège.</div>') + "</div>";
     setTimeout(function () {
-      $$("[data-group-form]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); var id = f.getAttribute("data-group-form"); var payload = { name: v.name, level: v.level, day: v.day, start_time: nullIfEmpty(v.start_time), animateur_id: nullIfEmpty(v.animateur_id), active: !!v.active }; if (!payload.name) return; if (id) await q(sb.from("groups").update(payload).eq("id", id)); else await q(sb.from("groups").insert(payload)); toast("Groupe enregistré."); route(); }); });
+      $$("[data-group-form]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); var id = f.getAttribute("data-group-form"); var payload = { name: v.name, kind: v.kind || "atelier", level: v.level, day: v.day, start_time: nullIfEmpty(v.start_time), animateur_id: nullIfEmpty(v.animateur_id), active: !!v.active }; if (!payload.name) return; if (id) await q(sb.from("groups").update(payload).eq("id", id)); else await q(sb.from("groups").insert(payload)); toast("Groupe enregistré."); route(); }); });
     }, 0);
     return html;
   };
 
   // ---------------------------------------------------------------- Séances (admin et animateur)
   VIEWS.seances = async function () {
-    var groups = await q(sb.from("groups").select("*, children(id, first_name)").eq("active", true).order("name"));
-    var sessions = await q(sb.from("sessions").select("*, groups(name)").order("session_date", { ascending: false }).limit(60));
+    var groups = await q(sb.from("groups").select("*, children:children!children_group_id_fkey(id), course_children:children!children_course_group_id_fkey(id)").eq("active", true).order("name"));
+    var sessions = await q(sb.from("sessions").select("*, groups(name, kind)").order("session_date", { ascending: false }).limit(60));
     var html = pageHead(roleIs("admin") ? "Séances" : "Mes séances", "Créez la séance du jour, cochez les présents, notez ce qui s'est passé.");
     if (!groups.length) return html + '<div class="empty">' + (roleIs("admin") ? "Aucun groupe actif. Créez-en un dans l'onglet Groupes." : "Aucun groupe ne vous est attribué pour l'instant. L'administration vous en attribuera un.") + "</div>";
-    html += '<div class="card"><h3>Nouvelle séance</h3><form class="form" id="form-session"><div class="row">' + field("Groupe", '<select name="group_id">' + optionsFrom(groups, "", function (g) { return g.name + " · " + (g.children || []).length + " enfants"; }) + "</select>") + field("Date", input("session_date", todayISO(), "date", "required")) + '</div><div class="btn-row"><button class="btn btn-primary" type="submit">Ouvrir la feuille de présence</button></div></form></div>';
-    html += '<h3>Séances passées</h3><div class="list">' + (sessions.length ? sessions.map(function (s) { return '<div class="row-card"><div><div class="title">' + esc(fmtDate(s.session_date)) + " · Groupe " + esc(s.groups ? s.groups.name : "") + '</div><div class="meta">' + esc(s.summary || "Pas de résumé") + '</div></div><div class="actions"><a class="btn btn-secondary btn-sm" href="#seance/' + s.id + '">Ouvrir</a></div></div>'; }).join("") : '<div class="empty">Aucune séance enregistrée.</div>') + "</div>";
+    html += '<div class="card"><h3>Nouvelle séance</h3><form class="form" id="form-session"><div class="row">' + field("Groupe", '<select name="group_id">' + optionsFrom(groups, "", function (g) { return (KINDS[g.kind] || "Atelier") + " · " + g.name + " · " + (g.kind === "cours" ? (g.course_children || []) : (g.children || [])).length + " enfants"; }) + "</select>") + field("Date", input("session_date", todayISO(), "date", "required")) + '</div><div class="btn-row"><button class="btn btn-primary" type="submit">Ouvrir la feuille de présence</button></div></form></div>';
+    html += '<h3>Séances passées</h3><div class="list">' + (sessions.length ? sessions.map(function (s) { return '<div class="row-card"><div><div class="title">' + esc(fmtDate(s.session_date)) + " · " + esc(s.groups ? (KINDS[s.groups.kind] || "Atelier") + " " + s.groups.name : "") + '</div><div class="meta">' + esc(s.summary || "Pas de résumé") + '</div></div><div class="actions"><a class="btn btn-secondary btn-sm" href="#seance/' + s.id + '">Ouvrir</a></div></div>'; }).join("") : '<div class="empty">Aucune séance enregistrée.</div>') + "</div>";
     setTimeout(function () {
       $("#form-session").addEventListener("submit", async function (e) {
         e.preventDefault(); var v = readForm(e.target);
@@ -357,12 +369,12 @@
   };
   VIEWS.seance = async function (id) {
     if (!id) { location.hash = "seances"; return ""; }
-    var s = await q(sb.from("sessions").select("*, groups(id, name, level)").eq("id", id).single());
-    var kids = await q(sb.from("children").select("id, first_name, status").eq("group_id", s.group_id).neq("status", "parti").order("first_name"));
+    var s = await q(sb.from("sessions").select("*, groups(id, name, kind, level)").eq("id", id).single());
+    var kids = await q(sb.from("children").select("id, first_name, status").or("group_id.eq." + s.group_id + ",course_group_id.eq." + s.group_id).neq("status", "parti").order("first_name"));
     var att = await q(sb.from("attendance").select("*").eq("session_id", id));
     var byKid = {}; att.forEach(function (a) { byKid[a.child_id] = a; });
     var canEdit = roleIs("admin") || roleIs("animateur");
-    var html = '<p><a href="#seances">← Toutes les séances</a></p>' + pageHead("Séance du " + fmtDate(s.session_date), "Groupe " + (s.groups ? s.groups.name : "") + " · " + (LEVELS[s.groups ? s.groups.level : ""] || ""));
+    var html = '<p><a href="#seances">← Toutes les séances</a></p>' + pageHead("Séance du " + fmtDate(s.session_date), (s.groups ? (KINDS[s.groups.kind] || "Atelier") + " " + s.groups.name : "") + " · " + (LEVELS[s.groups ? s.groups.level : ""] || ""));
     html += '<form class="form" id="form-attendance"><div class="check-list">' + (kids.length ? kids.map(function (k) { var a = byKid[k.id]; return '<label class="check-row"><input type="checkbox" name="present-' + k.id + '"' + (!a || a.present ? " checked" : "") + (canEdit ? "" : " disabled") + '><span class="title">' + esc(k.first_name) + '</span><input type="text" name="note-' + k.id + '" value="' + esc(a ? a.note || "" : "") + '" placeholder="Note pour cet enfant (facultatif)"' + (canEdit ? "" : " disabled") + "></label>"; }).join("") : '<div class="empty">Aucun enfant dans ce groupe.</div>') + "</div>";
     html += field("Ce qui a été fait, ce qui a bloqué", textarea("summary", s.summary, 4));
     if (canEdit) html += '<div class="btn-row"><button class="btn btn-primary" type="submit">Enregistrer la séance</button><button class="btn btn-secondary" type="button" id="btn-delete-session">Supprimer cette séance</button></div>';
@@ -394,7 +406,7 @@
     var template = "Ce que " + "{prenom}" + " a appris ce mois-ci :\n\nOù il progresse :\n\nOù il bloque encore :\n\nCe que vous pouvez faire à la maison :\n";
     var html = pageHead("Retours mensuels", "Un texte par enfant et par mois, envoyé aux parents. Ils le lisent dans leur espace.");
     html += '<div class="toolbar"><label for="month-pick" class="muted-sm">Mois</label><select id="month-pick">' + months.map(function (m) { return '<option value="' + m + '"' + (m === month ? " selected" : "") + ">" + esc(monthLabel(m)) + "</option>"; }).join("") + "</select></div>";
-    html += '<div class="list">' + (kids.length ? kids.map(function (k) { var r = byKid[k.id]; return '<div class="row-card"><div><div class="title">' + esc(k.first_name) + ' <span class="pill' + (r ? " pill-green" : "") + '">' + (r ? "Écrit" : "À écrire") + '</span></div><div class="meta">' + esc(k.groups ? "Groupe " + k.groups.name : "Sans groupe") + " · " + k.progress.sessions_done + " séances faites</div>" + (r ? '<div class="report-box" style="margin-top:8px">' + esc(r.body) + "</div>" : "") + '<div id="rep-' + k.id + '" hidden><form class="form inline-form" data-report-form="' + k.id + '" style="margin-top:10px">' + field("Retour de " + monthLabel(month), textarea("body", r ? r.body : template.replace("{prenom}", k.first_name), 8)) + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form></div></div><div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-toggle="rep-' + k.id + '">' + (r ? "Modifier" : "Écrire") + "</button></div></div>"; }).join("") : '<div class="empty">Aucun enfant.</div>') + "</div>";
+    html += '<div class="list">' + (kids.length ? kids.map(function (k) { var r = byKid[k.id]; return '<div class="row-card"><div><div class="title">' + esc(k.first_name) + ' <span class="pill' + (r ? " pill-green" : "") + '">' + (r ? "Écrit" : "À écrire") + '</span></div><div class="meta">' + esc([k.groups ? "Atelier " + k.groups.name : "", k.course_group ? "Cours " + k.course_group.name : ""].filter(Boolean).join(" · ") || "Sans groupe") + " · " + ((k.progress.sessions_done || 0) + (k.progress.course_done || 0)) + " séances faites</div>" + (r ? '<div class="report-box" style="margin-top:8px">' + esc(r.body) + "</div>" : "") + '<div id="rep-' + k.id + '" hidden><form class="form inline-form" data-report-form="' + k.id + '" style="margin-top:10px">' + field("Retour de " + monthLabel(month), textarea("body", r ? r.body : template.replace("{prenom}", k.first_name), 8)) + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form></div></div><div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-toggle="rep-' + k.id + '">' + (r ? "Modifier" : "Écrire") + "</button></div></div>"; }).join("") : '<div class="empty">Aucun enfant.</div>') + "</div>";
     setTimeout(function () {
       $("#month-pick").addEventListener("change", function () { location.hash = "retours/" + $("#month-pick").value; });
       $$("[data-report-form]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); if (!v.body) return; await q(sb.from("monthly_reports").upsert({ child_id: f.getAttribute("data-report-form"), month: month, body: v.body, author_id: session.user.id }, { onConflict: "child_id,month" })); toast("Retour enregistré."); route(); }); });

@@ -229,3 +229,15 @@ td .price { font-family: var(--font-display); font-weight: 600; font-size: 1.15r
 .code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 0.9em; background: var(--bg2); padding: 2px 6px; border-radius: 6px; }
 .copy-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .copy-row code { font: inherit; background: var(--bg2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; user-select: all; }
+
+/* Fenêtre de confirmation */
+.modal { position: fixed; inset: 0; z-index: 60; background: rgba(24, 38, 89, 0.55); display: flex; align-items: center; justify-content: center; padding: max(16px, env(safe-area-inset-left, 0px)); }
+.modal-box { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 60px rgba(24, 38, 89, 0.25); }
+.modal-box .check { width: 48px; height: 48px; border-radius: 50%; background: var(--pill-green-bg); color: var(--pill-green-fg); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.3rem; }
+.modal-box h2 { font-size: 1.4rem; }
+.modal-box p { color: var(--ink2); }
+
+/* Offres sur l'accueil */
+.offer { gap: 10px; }
+.offer .offer-num { font-family: var(--font-display); font-weight: 600; color: var(--green-text); letter-spacing: 0.08em; font-size: 0.9rem; }
+.offer a.more { font-weight: 700; margin-top: auto; }
