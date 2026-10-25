@@ -31,7 +31,7 @@ def header(current):
       <img class="logo-dark" src="assets/logo-horizontal-negatif.svg" alt="" width="94" height="40">
     </a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-    <nav class="nav" id="nav" aria-label="Navigation principale">{links}<a class="btn btn-primary" href="inscription.html">Liste d'attente</a></nav>
+    <nav class="nav" id="nav" aria-label="Navigation principale">{links}<a href="app/">Espace famille</a><a class="btn btn-primary" href="inscription.html">Liste d'attente</a></nav>
   </div>
 </header>'''
 
@@ -52,7 +52,7 @@ def footer():
     </div>
     <div>
       <h4>Parents</h4>
-      <ul><li><a href="inscription.html">Liste d'attente</a></li><li><a href="faq.html">Questions fréquentes</a></li><li><a href="a-propos.html#securite">Sécurité des enfants</a></li><li><a href="mentions-legales.html">Mentions légales</a></li></ul>
+      <ul><li><a href="inscription.html">Liste d'attente</a></li><li><a href="app/">Espace famille (connexion)</a></li><li><a href="faq.html">Questions fréquentes</a></li><li><a href="a-propos.html#securite">Sécurité des enfants</a></li><li><a href="mentions-legales.html">Mentions légales</a></li></ul>
     </div>
     <div>
       <h4>Contact</h4>
@@ -555,7 +555,8 @@ def page_html(name, p, full=True):
 <meta property="og:title" content="{title}"><meta property="og:description" content="{p["description"]}"><meta property="og:type" content="website"><meta property="og:locale" content="fr_MA">
 <link rel="icon" href="{FAVICON}">
 {FONTS}
-<link rel="stylesheet" href="assets/site.css">'''
+<link rel="stylesheet" href="assets/site.css">
+<script src="app/config.js"></script>'''
     body = header(name) + "\n<main>" + p["body"] + "</main>\n" + footer()
     if full:
         return f'''<!doctype html>

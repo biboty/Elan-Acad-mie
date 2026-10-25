@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Espace Élan Académie</title>
+<meta name="description" content="Espace de suivi d'Élan Académie : parents, animateurs et administration.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../assets/logo-symbole.svg">
+<link rel="apple-touch-icon" href="../assets/logo-symbole.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600&family=Nunito+Sans:wght@400;700&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+</head>
+<body>
+<header class="site-header app-header">
+  <div class="wrap">
+    <a class="brand logo-switch" href="../index.html" aria-label="Élan Académie, site public">
+      <img class="logo-light" src="../assets/logo-horizontal.svg" alt="Élan Académie" width="94" height="40">
+      <img class="logo-dark" src="../assets/logo-horizontal-negatif.svg" alt="" width="94" height="40">
+    </a>
+    <div class="user-box" id="user-box" hidden>
+      <span class="user-name" id="user-name"></span>
+      <span class="pill" id="user-role"></span>
+      <button class="btn btn-secondary btn-sm" type="button" id="btn-logout">Déconnexion</button>
+    </div>
+  </div>
+</header>
+
+<main class="app-main">
+  <section class="wrap" id="view-config" hidden>
+    <div class="card auth-card">
+      <p class="eyebrow">Application</p>
+      <h1 style="font-size:1.6rem">L'espace n'est pas encore activé</h1>
+      <p class="muted">Il manque l'adresse de la base de données dans <span class="code">app/config.js</span>. Dès qu'elle est renseignée, cette page devient l'espace de connexion des parents, des animateurs et de l'administration.</p>
+      <a class="btn btn-secondary" href="../index.html" style="align-self:flex-start">Retour au site</a>
+    </div>
+  </section>
+
+  <section class="wrap" id="view-auth" hidden>
+    <div class="auth-layout">
+      <div class="auth-intro">
+        <p class="eyebrow">Espace Élan Académie</p>
+        <h1>Suivre le parcours de votre enfant</h1>
+        <p class="lead">Séances faites et restantes, projets, démos, badges, retours mensuels de l'animateur. Les animateurs y préparent leurs séances ; l'équipe y suit les inscriptions.</p>
+        <p class="small muted">Parents : créez votre compte avec l'adresse e-mail que vous avez donnée à l'inscription ; il est relié automatiquement à votre famille.</p>
+      </div>
+      <div class="card auth-card">
+        <div class="tabs" role="tablist">
+          <button class="tab active" type="button" data-tab="login" role="tab">Connexion</button>
+          <button class="tab" type="button" data-tab="signup" role="tab">Créer un compte</button>
+        </div>
+        <form class="form" id="form-login" novalidate>
+          <div class="field"><label for="login-email">E-mail</label><input id="login-email" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="login-password">Mot de passe</label><input id="login-password" type="password" autocomplete="current-password" required></div>
+          <p class="error" id="login-error" aria-live="polite"></p>
+          <div class="btn-row"><button class="btn btn-primary" type="submit">Se connecter</button><button class="btn btn-secondary" type="button" id="btn-forgot">Mot de passe oublié</button></div>
+        </form>
+        <form class="form" id="form-signup" novalidate hidden>
+          <div class="field"><label for="signup-name">Votre nom</label><input id="signup-name" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="signup-email">E-mail</label><input id="signup-email" type="email" autocomplete="email" required><span class="hint">Celle donnée à l'inscription, pour relier le compte à votre famille.</span></div>
+          <div class="field"><label for="signup-password">Mot de passe</label><input id="signup-password" type="password" autocomplete="new-password" minlength="8" required><span class="hint">8 caractères au minimum.</span></div>
+          <p class="error" id="signup-error" aria-live="polite"></p>
+          <div class="btn-row"><button class="btn btn-primary" type="submit">Créer mon compte</button></div>
+        </form>
+        <form class="form" id="form-reset" novalidate hidden>
+          <p class="eyebrow">Nouveau mot de passe</p>
+          <div class="field"><label for="reset-password">Choisissez un mot de passe</label><input id="reset-password" type="password" autocomplete="new-password" minlength="8" required></div>
+          <p class="error" id="reset-error" aria-live="polite"></p>
+          <div class="btn-row"><button class="btn btn-primary" type="submit">Enregistrer</button></div>
+        </form>
+        <p class="small muted" id="auth-info" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <div id="view-app" hidden>
+    <nav class="app-nav" id="app-nav" aria-label="Sections"></nav>
+    <section class="wrap app-content" id="app-content"></section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

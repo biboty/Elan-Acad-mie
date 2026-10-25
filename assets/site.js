@@ -106,7 +106,14 @@
         status.scrollIntoView({ behavior: "smooth", block: "start" });
       };
 
-      if (CONFIG.formEndpoint) {
+      var APP = window.ELAN_CONFIG || {};
+      if (APP.supabaseUrl && APP.supabaseAnonKey) {
+        // Enregistre la demande dans la base de l'application (table waitlist), puis propose WhatsApp
+        var row = { parent: parent, phone: tel, email: email || null, child: enfant, age: ageNum, interest: interet || null, quartier: quartier || null, source: source || null, message: message || null, page: location.href };
+        fetch(APP.supabaseUrl.replace(/\/$/, "") + "/rest/v1/waitlist", { method: "POST", headers: { "Content-Type": "application/json", "apikey": APP.supabaseAnonKey, "Authorization": "Bearer " + APP.supabaseAnonKey, "Prefer": "return=minimal" }, body: JSON.stringify(row) })
+          .then(function (r) { finish(r.ok); })
+          .catch(function () { finish(false); });
+      } else if (CONFIG.formEndpoint) {
         var payload = { parent: parent, telephone: tel, email: email, enfant: enfant, age: ageNum, interet: interet, quartier: quartier, source: source, message: message, page: location.href, date: new Date().toISOString() };
         fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(payload) })
           .then(function (r) { finish(r.ok); })
