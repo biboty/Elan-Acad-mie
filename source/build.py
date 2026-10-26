@@ -568,6 +568,12 @@ def page_html(name, p, full=True):
 <link rel="icon" href="{FAVICON}">
 {FONTS}
 <link rel="stylesheet" href="assets/site.css">
+<link rel="manifest" href="app/manifest.webmanifest">
+<link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#F7F8FC">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Élan">
 <script src="app/config.js"></script>'''
     body = header(name) + "\n<main>" + p["body"] + "</main>\n" + footer()
     if full:
@@ -580,6 +586,7 @@ def page_html(name, p, full=True):
 </head>
 <body>
 {body}
+<script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {{}});</script>
 </body>
 </html>
 '''
