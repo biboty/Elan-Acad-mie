@@ -63,3 +63,12 @@ PLUS TARD
      Jitsi), les notes pendant le cours s'enregistrent toutes seules en écrivant (équipe seulement), les présences
      et la note par enfant s'enregistrent à chaque clic, le « Résumé pour les familles » est visible par les parents.
    - Espace parents : carte « Prochaine séance » avec le bouton « Rejoindre le cours » quand la séance est en ligne.
+
+8. INSTALLER L'APPLICATION SUR UN TÉLÉPHONE (ajouté le 26 octobre 2026)
+   - L'application est une « PWA » : sur Android (Chrome), ouvrir .../app/ puis menu ⋮ > « Installer l'application » ;
+     sur iPhone (Safari), bouton Partager > « Sur l'écran d'accueil ». Icône « Élan » sur fond indigo, plein écran.
+   - Fichiers : app/manifest.webmanifest (nom, couleurs, icônes), app/sw.js (réseau d'abord, jamais de vieille version),
+     app/icons/ (192, 512, maskable, Apple).
+   - Play Store : possible à partir de cette PWA (outil PWABuilder, compte développeur 25 USD une fois, test fermé
+     12 testeurs pendant 14 jours pour un compte personnel). App Store : 99 USD/an, un Mac, et Apple refuse les
+     simples sites emballés : à faire en V2 avec des fonctions natives (notifications).
