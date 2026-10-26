@@ -135,3 +135,8 @@ input.num { width: 90px; font: inherit; color: var(--ink); background: var(--car
 #form-rates { gap: 14px; }
 #form-rates .table-wrap table { min-width: 0; width: 100%; }
 video { width: 100%; max-height: 420px; background: #000; border-radius: var(--radius-s); }
+.card-warn { border-color: #E3C27A; background: #FFF9EC; }
+.row-card.is-done, .hw-row.is-done { opacity: 0.55; }
+.hw-row.is-done span { text-decoration: line-through; }
+.detail-grid .row-card { grid-template-columns: 1fr; }
+.detail-grid .row-card .actions { justify-content: flex-start; }

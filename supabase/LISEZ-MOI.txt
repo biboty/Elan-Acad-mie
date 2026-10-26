@@ -112,3 +112,17 @@ PLUS TARD
      vidéos, décision (Retenir / Refuser), suppression. « Questions et situations » : ajouter ou modifier le QCM.
      Un candidat retenu reçoit son accès comme un animateur (Supabase > Users > Add user, puis rôle dans Équipe).
    - Deux candidatures « Test automatique » ont servi à vérifier l'installation : à supprimer depuis l'onglet Recrutement.
+
+12. SAUVEGARDE, RAPPELS, DEVOIRS, DOCUMENTS SIGNÉS (ajouté le 26 octobre 2026, nuit)
+   - Base déjà créée avant : exécuter une fois supabase/migration-2026-10-26-rappels-devoirs.sql (fait le 26 octobre).
+   - Sauvegarde : Tableau de bord > « Télécharger la sauvegarde » : un fichier zip (un CSV par table + le tout en JSON),
+     à ranger dans votre Drive ou sur l'ordinateur. Le tableau de bord passe en orange après 7 jours sans sauvegarde.
+     Le plan gratuit de Supabase ne fait aucune sauvegarde : faites-la chaque semaine. Restauration : Table Editor >
+     la table > Insert > Import data from CSV.
+   - Rappels : Tableau de bord > « À prévenir aujourd'hui » : séances et réservations de demain, absences du jour,
+     soldes négatifs, chaque ligne avec un bouton WhatsApp au message déjà rempli. Les animateurs ont la même carte
+     dans « Mes séances » pour leurs familles.
+   - Devoirs : salle de classe > « Devoirs pour la prochaine séance » (et dans un créneau, après la séance). Les
+     familles les voient dans « Mes enfants » avec une case « fait ».
+   - Documents signés : fiche famille > protocole d'accueil, autorisation photo (ou refus), règlement, avec la date.
+     Pastille « Documents n/3 » dans la liste des familles ; compteur des inscrits sans protocole dans le tableau de bord.
