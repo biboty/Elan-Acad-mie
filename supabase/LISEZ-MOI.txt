@@ -28,7 +28,7 @@ Supabase (gratuite au lancement). Six étapes, environ 15 minutes, une seule foi
      Cette clé est publique par conception : la sécurité vient des règles de la base, pas de son secret.
 
 5. CRÉER LE COMPTE ADMINISTRATEUR
-   - Ouvrir l'application, onglet « Créer un compte », avec l'adresse bibotyassine4@gmail.com.
+   - Authentication > Users > Add user > Create new user : bibotyassine4@gmail.com, mot de passe, « Auto confirm user ».
    - Revenir dans SQL Editor et exécuter :
        update public.profiles set role = 'admin' where lower(email) = lower('bibotyassine4@gmail.com');
    - Recharger l'application : le rôle « Administration » apparaît en haut à droite.
@@ -37,7 +37,11 @@ Supabase (gratuite au lancement). Six étapes, environ 15 minutes, une seule foi
    - Groupes : créer « Bâtisseurs samedi » et « Argumentateurs mercredi ».
    - Équipe : quand un animateur a créé son compte, lui donner le rôle « Animateur », puis l'attribuer à un groupe.
    - Familles : saisir les premières familles (ou « Créer la famille » depuis la liste d'attente).
-   - Les parents créent leur compte avec l'e-mail saisi dans leur fiche famille : ils sont reliés automatiquement.
+   - Les familles ne créent pas de compte (décision du 26 octobre, inscriptions désactivées dans Authentication >
+     Sign In / Providers > « Allow new users to sign up »). Vous créez chaque accès dans Authentication > Users >
+     Add user > Create new user (e-mail de la fiche famille, mot de passe provisoire, « Auto confirm user »), puis
+     vous l'envoyez au parent sur WhatsApp ; il change le mot de passe dans « Mon compte ». Le compte est relié
+     automatiquement à sa famille quand l'e-mail correspond.
 
 CE QUE FAIT CHAQUE RÔLE
    Administration : liste d'attente (alimentée par le formulaire du site), familles, enfants, groupes, séances,

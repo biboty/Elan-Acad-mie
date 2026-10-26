@@ -572,7 +572,7 @@ def page_html(name, p, full=True):
     body = header(name) + "\n<main>" + p["body"] + "</main>\n" + footer()
     if full:
         return f'''<!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

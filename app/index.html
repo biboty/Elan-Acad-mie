@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -9,7 +9,8 @@
 <link rel="icon" href="../assets/logo-symbole.svg">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#243B8C">
+<meta name="theme-color" content="#F7F8FC">
+<meta name="color-scheme" content="light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Élan">
@@ -27,6 +28,7 @@
       <img class="logo-light" src="../assets/logo-horizontal.svg" alt="Élan Académie" width="94" height="40">
       <img class="logo-dark" src="../assets/logo-horizontal-negatif.svg" alt="" width="94" height="40">
     </a>
+    <button class="btn btn-secondary btn-sm" type="button" id="btn-login-top" data-auth="login" hidden>Se connecter</button>
     <div class="user-box" id="user-box" hidden>
       <span class="user-name" id="user-name"></span>
       <span class="pill" id="user-role"></span>
@@ -45,32 +47,35 @@
     </div>
   </section>
 
-  <section class="wrap" id="view-auth" hidden>
-    <div class="auth-layout">
-      <div class="auth-intro">
-        <p class="eyebrow">Espace famille · Élan Académie</p>
-        <h1>Suivre le parcours de votre enfant</h1>
-        <p class="lead">Ateliers et cours : séances faites et restantes, projets, démos, badges, retours mensuels de l'animateur. Les animateurs y préparent leurs séances ; l'équipe y suit les inscriptions.</p>
-        <div class="btn-row"><button class="btn btn-primary btn-lg" type="button" data-auth="login">Se connecter</button><button class="btn btn-secondary btn-lg" type="button" data-auth="signup">Créer un compte</button></div>
-        <p class="small muted">Parents : créez votre compte avec l'adresse e-mail que vous avez donnée à l'inscription ; il est relié automatiquement à votre famille. Pas encore inscrit ? <a href="../inscription.html">Inscrivez votre enfant</a> ou <a href="../index.html">découvrez l'académie</a>.</p>
-      </div>
-      <div class="card auth-card" id="auth-card" hidden>
-        <div class="tabs" role="tablist">
-          <button class="tab active" type="button" data-tab="login" role="tab">Connexion</button>
-          <button class="tab" type="button" data-tab="signup" role="tab">Créer un compte</button>
+  <section id="view-auth" hidden>
+    <div class="wrap landing">
+      <div class="landing-hero">
+        <div class="landing-text">
+          <p class="eyebrow">Espace famille · Élan Académie</p>
+          <h1>Le parcours de votre enfant, séance après séance</h1>
+          <p class="lead">Les parents y suivent les ateliers et les cours de leur enfant. Les animateurs y préparent et animent leurs séances. L'accès est créé par l'académie à l'inscription : pas de compte à créer.</p>
+          <div class="btn-row">
+            <a class="btn btn-primary btn-lg" id="btn-contact" href="https://wa.me/33760206797?text=Bonjour%2C%20je%20souhaite%20un%20acc%C3%A8s%20%C3%A0%20l%27espace%20famille%20d%27%C3%89lan%20Acad%C3%A9mie." target="_blank" rel="noopener">Demander un accès sur WhatsApp</a>
+            <button class="btn btn-secondary btn-lg" type="button" data-auth="login">J'ai déjà un accès</button>
+          </div>
         </div>
+        <div class="landing-visual" aria-hidden="true">
+          <div class="phone-mock">
+            <div class="hero-card"><div><p class="eyebrow">Aujourd'hui</p><h2>sam. 10 h 00</h2><p class="muted">Atelier Bâtisseurs · Adam · en ligne</p></div><div class="btn-row"><span class="btn btn-primary btn-sm">Rejoindre le cours</span></div></div>
+            <div class="mock-card"><div class="row-card" style="padding:12px 14px"><div><div class="title">Adam · 11 ans</div><div class="meta">Atelier Bâtisseurs · Cours Maths 5e</div><div class="progress-block"><div class="muted-sm" style="margin-bottom:4px">Ateliers</div><div class="progress"><i style="width:40%"></i></div><div class="progress-label"><span>13 séances faites</span><span>19 restantes sur 32</span></div></div></div></div></div>
+            <div class="mock-card"><div class="row-card" style="padding:12px 14px"><div><div class="title">Robot suiveur de ligne <span class="pill pill-green">Démo le 13 déc.</span></div><div class="meta">Projet du trimestre 1</div></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card auth-card" id="auth-card" hidden>
+        <div class="page-head"><div><p class="eyebrow">Connexion</p><h2 style="font-size:1.4rem">Votre espace</h2></div><button class="btn btn-secondary btn-sm" type="button" id="btn-auth-close">Fermer</button></div>
         <form class="form" id="form-login" novalidate>
           <div class="field"><label for="login-email">E-mail</label><input id="login-email" type="email" autocomplete="email" required></div>
           <div class="field"><label for="login-password">Mot de passe</label><input id="login-password" type="password" autocomplete="current-password" required></div>
           <p class="error" id="login-error" aria-live="polite"></p>
           <div class="btn-row"><button class="btn btn-primary" type="submit">Se connecter</button><button class="btn btn-secondary" type="button" id="btn-forgot">Mot de passe oublié</button></div>
-        </form>
-        <form class="form" id="form-signup" novalidate hidden>
-          <div class="field"><label for="signup-name">Votre nom</label><input id="signup-name" type="text" autocomplete="name" required></div>
-          <div class="field"><label for="signup-email">E-mail</label><input id="signup-email" type="email" autocomplete="email" required><span class="hint">Celle donnée à l'inscription, pour relier le compte à votre famille.</span></div>
-          <div class="field"><label for="signup-password">Mot de passe</label><input id="signup-password" type="password" autocomplete="new-password" minlength="8" required><span class="hint">8 caractères au minimum.</span></div>
-          <p class="error" id="signup-error" aria-live="polite"></p>
-          <div class="btn-row"><button class="btn btn-primary" type="submit">Créer mon compte</button></div>
+          <p class="small muted">Pas encore d'accès ? <a href="https://wa.me/33760206797" target="_blank" rel="noopener">Écrivez-nous sur WhatsApp</a> : nous le créons dans la journée.</p>
         </form>
         <form class="form" id="form-reset" novalidate hidden>
           <p class="eyebrow">Nouveau mot de passe</p>
@@ -79,6 +84,12 @@
           <div class="btn-row"><button class="btn btn-primary" type="submit">Enregistrer</button></div>
         </form>
         <p class="small muted" id="auth-info" aria-live="polite"></p>
+      </div>
+
+      <div class="landing-grid">
+        <div class="card"><span class="pill pill-green">Parents</span><h3>Ce que vous voyez</h3><ul><li>Les séances faites et restantes de chaque enfant</li><li>La prochaine séance, avec le bouton « Rejoindre le cours » quand elle est en ligne</li><li>Le projet du trimestre, la date de la démo, les badges</li><li>Le retour mensuel écrit par l'animateur</li><li>Les rencontres métiers à venir</li></ul></div>
+        <div class="card"><span class="pill">Animateurs</span><h3>La salle de classe</h3><ul><li>Planifier la séance et lancer la visio</li><li>Prendre des notes pendant le cours</li><li>Cocher les présents, une note par enfant</li><li>Écrire le résumé envoyé aux familles</li></ul></div>
+        <div class="card"><span class="pill">Accès</span><h3>Comment obtenir votre accès</h3><ol><li><a href="../inscription.html">Inscrivez votre enfant</a> sur le site ou contactez-nous.</li><li>Nous créons votre accès et vous l'envoyons sur WhatsApp.</li><li>Connectez-vous ici. Sur téléphone, ajoutez l'application à l'écran d'accueil.</li></ol></div>
       </div>
     </div>
   </section>

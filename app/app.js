@@ -77,7 +77,7 @@
   }
 
   // ---------------------------------------------------------------- démarrage et authentification
-  function show(id) { ["view-config", "view-auth", "view-app"].forEach(function (v) { $("#" + v).hidden = v !== id; }); }
+  function show(id) { ["view-config", "view-auth", "view-app"].forEach(function (v) { $("#" + v).hidden = v !== id; }); var top = $("#btn-login-top"); if (top) top.hidden = id !== "view-auth"; }
 
   async function init() {
     if (!C.supabaseUrl || !C.supabaseAnonKey || !window.supabase) { show("view-config"); return; }
@@ -94,27 +94,20 @@
   }
 
   function showAuthForm(which) {
-    $("#auth-card").hidden = false;
+    var card = $("#auth-card"); card.hidden = false;
     $("#form-login").hidden = which !== "login";
-    $("#form-signup").hidden = which !== "signup";
     $("#form-reset").hidden = which !== "reset";
-    $$(".tab").forEach(function (t) { t.classList.toggle("active", t.getAttribute("data-tab") === which); });
+    if (card.scrollIntoView) card.scrollIntoView({ behavior: "smooth", block: "start" });
+    var f = which === "reset" ? $("#reset-password") : $("#login-email"); if (f) setTimeout(function () { f.focus(); }, 300);
   }
 
   function bindAuth() {
-    $$(".tab, [data-auth]").forEach(function (t) { t.addEventListener("click", function () { showAuthForm(t.getAttribute("data-tab") || t.getAttribute("data-auth")); var card = $("#auth-card"); if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth", block: "start" }); }); });
+    $$("[data-auth]").forEach(function (t) { t.addEventListener("click", function () { showAuthForm(t.getAttribute("data-auth")); }); });
+    $("#btn-auth-close").addEventListener("click", function () { $("#auth-card").hidden = true; window.scrollTo({ top: 0, behavior: "smooth" }); });
     $("#form-login").addEventListener("submit", async function (e) {
       e.preventDefault(); $("#login-error").textContent = "";
       var r = await sb.auth.signInWithPassword({ email: $("#login-email").value.trim(), password: $("#login-password").value });
       if (r.error) $("#login-error").textContent = r.error.message === "Invalid login credentials" ? "E-mail ou mot de passe incorrect." : r.error.message;
-    });
-    $("#form-signup").addEventListener("submit", async function (e) {
-      e.preventDefault(); $("#signup-error").textContent = "";
-      var email = $("#signup-email").value.trim(), pwd = $("#signup-password").value, name = $("#signup-name").value.trim();
-      if (!name || !email || pwd.length < 8) { $("#signup-error").textContent = "Nom, e-mail et un mot de passe de 8 caractères au minimum."; return; }
-      var r = await sb.auth.signUp({ email: email, password: pwd, options: { data: { full_name: name }, emailRedirectTo: location.origin + location.pathname } });
-      if (r.error) { $("#signup-error").textContent = r.error.message; return; }
-      if (!r.data.session) { $("#auth-info").textContent = "Compte créé. Ouvrez l'e-mail de confirmation que nous venons d'envoyer à " + email + ", puis connectez-vous."; showAuthForm("login"); }
     });
     $("#btn-forgot").addEventListener("click", async function () {
       var email = $("#login-email").value.trim();
@@ -520,7 +513,8 @@
   VIEWS.equipe = async function () {
     var people = await q(sb.from("profiles").select("*").order("created_at", { ascending: false }));
     var fams = await q(sb.from("families").select("id, parent_name, email").order("parent_name"));
-    var html = pageHead("Équipe et comptes", "Chaque personne crée son compte sur la page de connexion ; vous choisissez ici son rôle. Un parent est relié automatiquement à sa famille quand les e-mails correspondent.");
+    var html = pageHead("Équipe et comptes", "Les accès sont créés par vous, jamais par les familles. Vous choisissez ici le rôle de chaque compte ; un parent est relié automatiquement à sa famille quand les e-mails correspondent.");
+    html += '<div class="notice"><strong>Créer un accès</strong> : <a href="https://supabase.com/dashboard/project/' + (C.supabaseUrl || "").replace(/^https:\/\/([^.]+)\..*$/, "$1") + '/auth/users" target="_blank" rel="noopener">Supabase › Authentication › Users</a> › « Add user » › « Create new user » : l\'e-mail de la fiche famille, un mot de passe provisoire, case « Auto confirm user » cochée. Le compte apparaît ici en quelques secondes ; envoyez l\'e-mail et le mot de passe au parent sur WhatsApp, il le changera dans « Mon compte ».</div>';
     html += '<div class="list">' + people.map(function (p) { return '<div class="row-card"><div><div class="title">' + esc(p.full_name || "Sans nom") + ' <span class="pill' + (p.role === "admin" ? " pill-green" : "") + '">' + esc(ROLES[p.role]) + '</span></div><div class="meta">' + esc(p.email || "") + (p.phone ? " · " + esc(p.phone) : "") + " · depuis le " + esc(fmtDate(p.created_at)) + '</div></div><div class="actions"><select class="status" data-role="' + p.id + '"' + (p.id === profile.id ? " disabled" : "") + ">" + options(ROLES, p.role) + '</select><select class="status" data-family-link="' + p.id + '">' + optionsFrom(fams, p.family_id, function (f) { return f.parent_name + (f.email ? " · " + f.email : ""); }, "Aucune famille") + "</select></div></div>"; }).join("") + "</div>";
     setTimeout(function () {
       $$("[data-role]").forEach(function (sel) { sel.addEventListener("change", async function () { await q(sb.from("profiles").update({ role: sel.value }).eq("id", sel.getAttribute("data-role"))); toast("Rôle enregistré."); }); });
