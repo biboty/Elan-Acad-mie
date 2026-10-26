@@ -1,5 +1,11 @@
 /* Élan Académie — application (s'appuie sur ../assets/site.css) */
 .app-header .wrap { min-height: 64px; }
+.app-header .wrap { gap: 12px; }
+.back-site { display: inline-flex; align-items: center; gap: 4px; margin-right: auto; padding: 8px 12px 8px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink2); font-weight: 700; font-size: 0.88rem; text-decoration: none; white-space: nowrap; }
+.back-site:hover { color: var(--ink); background: var(--bg2); }
+@media (max-width: 480px) { .back-site span { display: none; } .back-site { padding: 8px; } }
+.nav-ext { margin-top: 6px; border-top: 1px solid var(--line); padding-top: 12px !important; color: var(--ink3) !important; }
+@media (max-width: 960px) { .nav-ext { margin-top: 0; border-top: 0; padding-top: 9px !important; } }
 .user-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
 .user-name { font-weight: 700; font-size: 0.95rem; }
 @media (max-width: 560px) { .user-name { display: none; } }

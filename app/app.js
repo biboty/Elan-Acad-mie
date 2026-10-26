@@ -154,7 +154,7 @@
     var token = hash.split("/")[0];
     var known = (items.some(function (i) { return i[0] === token; }) || token === "enfant" || token === "seance") && typeof VIEWS[token] === "function";
     if (!known) { token = items[0][0]; hash = token; }
-    $("#app-nav").innerHTML = '<div class="nav-inner">' + items.map(function (i) { return '<a href="#' + i[0] + '"' + (i[0] === token || (token === "enfant" && i[0] === "enfants") || (token === "seance" && i[0] === "seances") || (token === "rencontre" && i[0] === "rencontres") ? ' class="active"' : "") + ">" + icon(i[0]) + "<span>" + esc(i[1]) + "</span></a>"; }).join("") + "</div>";
+    $("#app-nav").innerHTML = '<div class="nav-inner">' + items.map(function (i) { return '<a href="#' + i[0] + '"' + (i[0] === token || (token === "enfant" && i[0] === "enfants") || (token === "seance" && i[0] === "seances") || (token === "rencontre" && i[0] === "rencontres") ? ' class="active"' : "") + ">" + icon(i[0]) + "<span>" + esc(i[1]) + "</span></a>"; }).join("") + '<a class="nav-ext" href="../index.html">' + icon("accueil") + "<span>Accueil du site</span></a></div>";
     var fn = VIEWS[token];
     var arg = hash.split("/")[1];
     $("#app-content").innerHTML = '<p class="muted">Chargement…</p>';
