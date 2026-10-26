@@ -51,3 +51,15 @@ PLUS TARD
      (gratuit jusqu'à 3 000 e-mails par mois), puis réactiver « Confirm email ».
    - Sauvegardes : Supabase garde des sauvegardes quotidiennes 7 jours sur le plan gratuit ; Database > Backups.
    - Domaine : quand elanacademie.ma est en place, ajouter https://elanacademie.ma/app/ dans Redirect URLs.
+
+7. COURS EN LIGNE ET NOTES PENDANT LE COURS (ajouté le 26 octobre 2026)
+   - Base déjà créée avant cette date : exécuter une fois supabase/migration-2026-10-26-visio.sql dans SQL Editor
+     (fait le 26 octobre sur le projet actuel). Une base neuve n'en a pas besoin, schema.sql contient tout.
+   - Groupes : le champ « Lien de visio permanent » (Google Meet, Zoom, Jitsi) est repris sur chaque séance du groupe.
+   - Séances > « Planifier une séance » : groupe, date, heure, lien. « Créer une salle » génère une salle Jitsi
+     gratuite (meet.jit.si) ; la première personne qui entre, l'animateur, se connecte avec un compte Google ou
+     GitHub pour devenir modérateur ; les familles entrent sans compte.
+   - Salle de classe (une séance) : « Lancer le cours » ouvre la visio dans un nouvel onglet (ou dans la page pour
+     Jitsi), les notes pendant le cours s'enregistrent toutes seules en écrivant (équipe seulement), les présences
+     et la note par enfant s'enregistrent à chaque clic, le « Résumé pour les familles » est visible par les parents.
+   - Espace parents : carte « Prochaine séance » avec le bouton « Rejoindre le cours » quand la séance est en ligne.

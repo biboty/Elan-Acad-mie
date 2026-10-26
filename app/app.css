@@ -2,6 +2,7 @@
 .app-header .wrap { min-height: 64px; }
 .user-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
 .user-name { font-weight: 700; font-size: 0.95rem; }
+@media (max-width: 560px) { .user-name { display: none; } }
 .btn-sm { padding: 8px 14px; font-size: 0.88rem; }
 .app-main { min-height: 70vh; padding-block: 24px 64px; }
 
@@ -15,15 +16,53 @@
 .tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 14px; font: 700 0.95rem var(--font-body); color: var(--ink3); cursor: pointer; margin-bottom: -1px; }
 .tab.active { color: var(--ink); border-bottom-color: var(--green); }
 
-/* Navigation de l'application */
-.app-nav { position: sticky; top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 15; background: var(--bg); border-bottom: 1px solid var(--line); margin-bottom: 24px; }
-.app-nav .wrap { display: flex; gap: 2px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.app-nav .wrap::-webkit-scrollbar { display: none; }
-.app-nav a { flex: none; padding: 14px 14px; text-decoration: none; color: var(--ink2); font-weight: 700; font-size: 0.92rem; border-bottom: 2px solid transparent; white-space: nowrap; }
-.app-nav a.active { color: var(--ink); border-bottom-color: var(--green); }
+/* Navigation de l'application : barre latérale sur grand écran, onglets défilants sur mobile */
+.app-shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 32px; align-items: start; }
+.app-shell > * { min-width: 0; }
+.app-nav { position: sticky; top: calc(64px + 20px + env(safe-area-inset-top, 0px)); }
+.nav-inner { display: flex; flex-direction: column; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+.app-nav a { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; text-decoration: none; color: var(--ink2); font-weight: 700; font-size: 0.95rem; line-height: 1.2; }
+.app-nav a:hover { background: var(--bg2); color: var(--ink); }
+.app-nav a.active { background: var(--brand); color: #fff; }
+.nav-ico { width: 20px; height: 20px; flex: none; color: var(--ink3); }
+.app-nav a.active .nav-ico { color: #5BE0A8; }
+:root[data-theme="dark"] .app-nav a.active { background: var(--bg2); color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .app-nav a.active { background: var(--bg2); color: #fff; } }
+@media (max-width: 960px) {
+  .app-shell { grid-template-columns: 1fr; gap: 20px; }
+  .app-nav { position: sticky; top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 15; background: var(--bg); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+  .nav-inner { flex-direction: row; gap: 2px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: none; border: 0; border-radius: 0; padding: 0; }
+  .nav-inner::-webkit-scrollbar { display: none; }
+  .app-nav a { flex: none; padding: 12px 10px; border-radius: 0; border-bottom: 2px solid transparent; font-size: 0.9rem; gap: 8px; }
+  .app-nav a.active, :root[data-theme="dark"] .app-nav a.active { background: none; color: var(--ink); border-bottom-color: var(--green); }
+  .app-nav a.active .nav-ico { color: var(--green-text); }
+  .nav-ico { width: 18px; height: 18px; }
+}
+
+/* Carte « prochain cours » */
+.hero-card { background: var(--brand); color: #fff; border-radius: var(--radius); padding: 26px 28px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 18px 28px; }
+.hero-card .eyebrow { color: #5BE0A8; }
+.hero-card h2 { color: #fff; font-size: clamp(1.3rem, 2.4vw, 1.7rem); margin-top: 4px; }
+.hero-card .muted { color: #C9D3F5; margin-top: 6px; }
+.hero-card .btn-primary { background: #3EC28F; color: #182659; }
+.hero-card .btn-secondary { background: transparent; color: #fff; border-color: #9DAEEA; }
+
+/* Salle de classe */
+.classroom { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr); gap: 20px; align-items: start; }
+.classroom-main, .classroom-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (max-width: 960px) { .classroom { grid-template-columns: 1fr; } }
+.visio-frame iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: var(--radius-s); background: #000; }
+.notes-card textarea { font: inherit; font-size: 0.98rem; line-height: 1.6; width: 100%; min-height: 340px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-s); padding: 14px 16px; resize: vertical; }
+.notes-card textarea:focus { border-color: var(--focus); outline: none; }
+.chips { gap: 8px; }
+.chips .btn-sm { padding: 6px 12px; font-size: 0.84rem; }
+.input-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.input-row input { flex: 1 1 220px; font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-s); padding: 11px 14px; min-width: 0; }
+.row-today { border-color: var(--green); }
+details summary { cursor: pointer; }
 
 /* Contenu */
-.app-content { display: flex; flex-direction: column; gap: 22px; }
+.app-content { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
 .page-head h1 { font-size: clamp(1.5rem, 2.6vw, 2rem); }
 .page-head p { color: var(--ink2); }

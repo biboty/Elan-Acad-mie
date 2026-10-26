@@ -49,6 +49,26 @@
   function readForm(form) { var o = {}; $$("input, select, textarea", form).forEach(function (el) { if (!el.name) return; o[el.name] = el.type === "checkbox" ? el.checked : el.value.trim(); }); return o; }
   function nullIfEmpty(v) { return v === "" ? null : v; }
   function roleIs(r) { return profile && profile.role === r; }
+  function slug(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+  function jitsiRoom(name, date) { return "https://meet.jit.si/ElanAcademie-" + slug(name) + (date ? "-" + date.replace(/-/g, "") : ""); }
+  function isEmbeddable(url) { return /^https:\/\/(meet\.jit\.si|8x8\.vc)\//.test(url || ""); }
+  function nowHM() { var d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function debounce(fn, ms) { var h; var d = function () { clearTimeout(h); var a = arguments; h = setTimeout(function () { fn.apply(null, a); }, ms); }; d.flush = function () { clearTimeout(h); fn(); }; return d; }
+  function sessionWhen(s) { return fmtDate(s.session_date) + (s.start_time ? " à " + s.start_time : ""); }
+  function isToday(s) { return s.session_date === todayISO(); }
+  var ICONS = {
+    accueil: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/>',
+    liste: '<path d="M4 6h16M4 12h10M4 18h7"/>',
+    familles: '<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9.5" r="2.4"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14.5 18.5a4 4 0 0 1 6 0"/>',
+    enfants: '<circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',
+    groupes: '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
+    seances: '<rect x="3.5" y="6" width="13" height="12" rx="2.5"/><path d="m16.5 10 4-2.5v9l-4-2.5"/>',
+    retours: '<path d="M5 4h11l3 3v13H5z"/><path d="M8 12h8M8 16h5"/>',
+    rencontres: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    equipe: '<circle cx="12" cy="7" r="3"/><path d="M4 20a8 8 0 0 1 16 0"/><path d="M19.5 5.5 21 7l-1.5 1.5"/>',
+    compte: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l2.5 2"/>'
+  };
+  function icon(name) { return '<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || ICONS.compte) + "</svg>"; }
 
   async function q(promise) {
     var res = await promise;
@@ -141,7 +161,7 @@
     var token = hash.split("/")[0];
     var known = (items.some(function (i) { return i[0] === token; }) || token === "enfant" || token === "seance") && typeof VIEWS[token] === "function";
     if (!known) { token = items[0][0]; hash = token; }
-    $("#app-nav").innerHTML = '<div class="wrap">' + items.map(function (i) { return '<a href="#' + i[0] + '"' + (i[0] === token || (token === "enfant" && i[0] === "enfants") || (token === "seance" && i[0] === "seances") || (token === "rencontre" && i[0] === "rencontres") ? ' class="active"' : "") + ">" + esc(i[1]) + "</a>"; }).join("") + "</div>";
+    $("#app-nav").innerHTML = '<div class="nav-inner">' + items.map(function (i) { return '<a href="#' + i[0] + '"' + (i[0] === token || (token === "enfant" && i[0] === "enfants") || (token === "seance" && i[0] === "seances") || (token === "rencontre" && i[0] === "rencontres") ? ' class="active"' : "") + ">" + icon(i[0]) + "<span>" + esc(i[1]) + "</span></a>"; }).join("") + "</div>";
     var fn = VIEWS[token];
     var arg = hash.split("/")[1];
     $("#app-content").innerHTML = '<p class="muted">Chargement…</p>';
@@ -188,7 +208,7 @@
     var kids = await loadChildrenWithProgress();
     var wait = await q(sb.from("waitlist").select("id, status, created_at"));
     var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
-    var sessions = await q(sb.from("sessions").select("id, session_date, groups(name)").gte("session_date", todayISO()).lte("session_date", weekEnd.toISOString().slice(0, 10)).order("session_date"));
+    var sessions = await q(sb.from("sessions").select("id, session_date, start_time, meeting_url, groups(name, kind)").gte("session_date", todayISO()).lte("session_date", weekEnd.toISOString().slice(0, 10)).order("session_date").order("start_time"));
     var inscrits = kids.filter(function (k) { return k.status === "inscrit"; });
     var late = inscrits.filter(function (k) { return (k.progress.last_report_month || "") < prevMonthKey() && ((k.progress.sessions_done || 0) + (k.progress.course_done || 0)) > 0; });
     var count = function (arr, st) { return arr.filter(function (x) { return x.status === st; }).length; };
@@ -200,7 +220,7 @@
       '<div class="stat"><strong>' + sessions.length + "</strong><span>séances dans les 7 prochains jours</span></div>" +
       '<div class="stat' + (late.length ? " warn" : "") + '"><strong>' + late.length + "</strong><span>retours mensuels en retard</span></div></div>";
     html += '<div class="detail-grid"><div class="card"><h3>Retours mensuels en retard</h3>' + (late.length ? '<div class="list">' + late.map(function (k) { return '<div class="row-card"><div><div class="title">' + esc(k.first_name) + '</div><div class="meta">Dernier retour : ' + (k.progress.last_report_month ? esc(monthLabel(k.progress.last_report_month)) : "aucun") + '</div></div><div class="actions"><a class="btn btn-secondary btn-sm" href="#retours">Écrire</a></div></div>'; }).join("") + "</div>" : '<p class="muted">Aucun. Chaque enfant inscrit a reçu son retour du mois dernier.</p>') + "</div>";
-    html += '<div class="card"><h3>Séances des 7 prochains jours</h3>' + (sessions.length ? '<div class="list">' + sessions.map(function (s) { return '<div class="row-card"><div><div class="title">' + esc(fmtDate(s.session_date)) + '</div><div class="meta">Groupe ' + esc(s.groups ? s.groups.name : "") + '</div></div><div class="actions"><a class="btn btn-secondary btn-sm" href="#seance/' + s.id + '">Ouvrir</a></div></div>'; }).join("") + "</div>" : '<p class="muted">Aucune séance créée pour la semaine. Les animateurs les créent le jour même depuis « Mes séances ».</p>') + "</div></div>";
+    html += '<div class="card"><h3>Séances des 7 prochains jours</h3>' + (sessions.length ? '<div class="list">' + sessions.map(function (s) { return sessionRow(s, true); }).join("") + "</div>" : '<p class="muted">Aucune séance planifiée pour la semaine. Les animateurs les planifient depuis « Mes séances ».</p>') + "</div></div>";
     return html;
   };
 
@@ -277,6 +297,11 @@
       if (!profile.family_id) return pageHead("Mes enfants") + '<div class="empty">Votre compte n\'est pas encore relié à une famille. Écrivez-nous sur WhatsApp avec l\'adresse e-mail de ce compte et nous faisons le lien dans la journée.</div>';
       if (!kids.length) return pageHead("Mes enfants") + '<div class="empty">Aucun enfant n\'est encore inscrit sous votre famille.</div>';
       var out = pageHead("Mes enfants", "Le parcours de chacun, mis à jour après chaque séance.");
+      var gids = []; kids.forEach(function (k) { if (k.group_id) gids.push(k.group_id); if (k.course_group_id) gids.push(k.course_group_id); });
+      if (gids.length) {
+        var next = await q(sb.from("sessions").select("*, groups(name, kind)").in("group_id", gids).gte("session_date", todayISO()).order("session_date").order("start_time").limit(1));
+        if (next.length) { var n = next[0]; var who = kids.filter(function (k) { return k.group_id === n.group_id || k.course_group_id === n.group_id; }).map(function (k) { return k.first_name; }).join(" et "); out += '<div class="hero-card"><div><p class="eyebrow">' + (isToday(n) ? "Aujourd'hui" : "Prochaine séance") + '</p><h2>' + esc(sessionWhen(n)) + '</h2><p class="muted">' + esc((KINDS[(n.groups || {}).kind] || "Atelier") + " " + ((n.groups || {}).name || "") + " · " + who) + (n.meeting_url ? " · en ligne" : " · en présentiel") + '</p></div><div class="btn-row">' + (n.meeting_url ? launchBtn(n, "btn-primary", "Rejoindre le cours") : "") + '<a class="btn btn-secondary" href="#seance/' + n.id + '">Détails</a></div></div>'; }
+      }
       for (var i = 0; i < kids.length; i++) out += await childDetailHtml(kids[i]);
       return out;
     }
@@ -292,7 +317,7 @@
   };
 
   async function childDetailHtml(k) {
-    var att = await q(sb.from("attendance").select("present, note, session_id, sessions(session_date, summary)").eq("child_id", k.id));
+    var att = await q(sb.from("attendance").select("present, note, session_id, sessions(session_date, start_time, summary)").eq("child_id", k.id));
     att.sort(function (a, b) { return (b.sessions ? b.sessions.session_date : "") < (a.sessions ? a.sessions.session_date : "") ? -1 : 1; });
     var projects = await q(sb.from("projects").select("*").eq("child_id", k.id).order("created_at", { ascending: false }));
     var reports = await q(sb.from("monthly_reports").select("*").eq("child_id", k.id).order("month", { ascending: false }));
@@ -310,7 +335,7 @@
     html += "</div>";
     // retours et présences
     html += '<div><h3>Retours mensuels</h3>' + (reports.length ? reports.map(function (r) { return '<p class="eyebrow" style="margin-top:10px">' + esc(monthLabel(r.month)) + '</p><div class="report-box">' + esc(r.body) + "</div>"; }).join("") : '<p class="muted">Le premier retour écrit arrive à la fin du premier mois de séances.</p>');
-    html += '<h3 style="margin-top:20px">Séances</h3>' + (att.length ? '<div class="list" style="margin-top:8px">' + att.slice(0, 12).map(function (a) { return '<div class="row-card"><div><div class="title">' + esc(fmtDate(a.sessions ? a.sessions.session_date : "")) + ' <span class="pill' + (a.present ? " pill-green" : "") + '">' + (a.present ? "Présent" : "Absent") + '</span></div><div class="meta">' + esc(a.note || (a.sessions && a.sessions.summary) || "") + "</div></div></div>"; }).join("") + "</div>" : '<p class="muted">Aucune séance enregistrée pour l\'instant.</p>');
+    html += '<h3 style="margin-top:20px">Séances</h3>' + (att.length ? '<div class="list" style="margin-top:8px">' + att.slice(0, 12).map(function (a) { return '<div class="row-card"><div><div class="title">' + esc(fmtDate(a.sessions ? a.sessions.session_date : "")) + ' <span class="pill' + (a.present ? " pill-green" : "") + '">' + (a.present ? "Présent" : "Absent") + '</span></div><div class="meta">' + esc([a.note, a.sessions && a.sessions.summary].filter(Boolean).join(" · ")) + '</div></div><div class="actions"><a class="btn btn-secondary btn-sm" href="#seance/' + a.session_id + '">Voir</a></div></div>'; }).join("") + "</div>" : '<p class="muted">Aucune séance enregistrée pour l\'instant.</p>');
     html += "</div></div>";
     if (roleIs("admin")) {
       var groups = await q(sb.from("groups").select("*").eq("active", true).order("name"));
@@ -337,57 +362,109 @@
     var groups = await q(sb.from("groups").select("*, children:children!children_group_id_fkey(id), course_children:children!children_course_group_id_fkey(id)").order("name"));
     var team = await q(sb.from("profiles").select("id, full_name, email, role").eq("role", "animateur").order("full_name"));
     var animLabel = function (id) { var a = team.find(function (t) { return t.id === id; }); return a ? (a.full_name || a.email) : "Sans animateur"; };
-    var form = function (g) { g = g || {}; return '<form class="form" data-group-form="' + (g.id || "") + '"><div class="row">' + field("Nom du groupe", input("name", g.name, "text", 'required placeholder="Bâtisseurs samedi 10 h"')) + field("Type", '<select name="kind">' + options(KINDS, g.kind || "atelier") + "</select>") + field("Niveau", '<select name="level">' + options(LEVELS, g.level || "batisseurs") + "</select>", "Ateliers : Explorateurs à Décideurs. Cours : collège ou lycée.") + "</div><div class=\"row\">" + field("Jour", '<select name="day">' + DAYS.map(function (d) { return '<option value="' + d + '"' + (g.day === d ? " selected" : "") + ">" + d + "</option>"; }).join("") + "</select>") + field("Heure de début", input("start_time", g.start_time, "text", 'placeholder="10 h"')) + field("Animateur", '<select name="animateur_id">' + optionsFrom(team, g.animateur_id, function (t) { return t.full_name || t.email; }, "À attribuer") + "</select>") + "</div>" + field("Groupe actif", '<label class="muted-sm"><input type="checkbox" name="active"' + (g.active !== false ? " checked" : "") + "> Les groupes inactifs disparaissent des listes</label>") + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>'; };
+    var form = function (g) { g = g || {}; return '<form class="form" data-group-form="' + (g.id || "") + '"><div class="row">' + field("Nom du groupe", input("name", g.name, "text", 'required placeholder="Bâtisseurs samedi 10 h"')) + field("Type", '<select name="kind">' + options(KINDS, g.kind || "atelier") + "</select>") + field("Niveau", '<select name="level">' + options(LEVELS, g.level || "batisseurs") + "</select>", "Ateliers : Explorateurs à Décideurs. Cours : collège ou lycée.") + "</div><div class=\"row\">" + field("Jour", '<select name="day">' + DAYS.map(function (d) { return '<option value="' + d + '"' + (g.day === d ? " selected" : "") + ">" + d + "</option>"; }).join("") + "</select>") + field("Heure de début", input("start_time", g.start_time, "text", 'placeholder="10 h"')) + field("Animateur", '<select name="animateur_id">' + optionsFrom(team, g.animateur_id, function (t) { return t.full_name || t.email; }, "À attribuer") + "</select>") + "</div>" + field("Lien de visio permanent", input("meeting_url", g.meeting_url, "url", 'placeholder="https://meet.google.com/… (facultatif)"'), "Repris automatiquement sur chaque séance en ligne de ce groupe. Laissez vide pour un groupe en présentiel.") + field("Groupe actif", '<label class="muted-sm"><input type="checkbox" name="active"' + (g.active !== false ? " checked" : "") + "> Les groupes inactifs disparaissent des listes</label>") + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>'; };
     var html = pageHead("Groupes", "Un groupe = un niveau, un jour, un animateur, 8 enfants au maximum.", '<button class="btn btn-primary" type="button" data-toggle="new-group">Nouveau groupe</button>');
     html += '<div class="inline-form" id="new-group" hidden><h3>Nouveau groupe</h3>' + form() + "</div>";
     if (!team.length) html += '<p class="notice">Aucun animateur pour l\'instant : l\'animateur crée son compte sur cette page, puis vous lui donnez le rôle « Animateur » dans l\'onglet Équipe.</p>';
     html += '<div class="list">' + (groups.length ? groups.map(function (g) { var n = (g.kind === "cours" ? (g.course_children || []) : (g.children || [])).length; var max = g.kind === "cours" ? 6 : 8; return '<div class="row-card"><div><div class="title">' + esc(g.name) + ' <span class="pill' + (g.kind === "cours" ? "" : " pill-green") + '">' + esc(KINDS[g.kind] || "Atelier") + "</span>" + (g.active ? "" : ' <span class="pill">Inactif</span>') + (n >= max ? ' <span class="pill">Complet</span>' : "") + '</div><div class="meta">' + [LEVELS[g.level], g.day ? g.day + (g.start_time ? " " + g.start_time : "") : "", animLabel(g.animateur_id), n + " enfant" + (n > 1 ? "s" : "") + " sur " + max].filter(Boolean).map(esc).join(" · ") + '</div><div id="grp-' + g.id + '" hidden><div class="inline-form" style="margin-top:12px">' + form(g) + '</div></div></div><div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-toggle="grp-' + g.id + '">Modifier</button></div></div>'; }).join("") : '<div class="empty">Aucun groupe. Commencez par un atelier Bâtisseurs (10-12 ans), un atelier Argumentateurs (13-15 ans) et un groupe de cours collège.</div>') + "</div>";
     setTimeout(function () {
-      $$("[data-group-form]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); var id = f.getAttribute("data-group-form"); var payload = { name: v.name, kind: v.kind || "atelier", level: v.level, day: v.day, start_time: nullIfEmpty(v.start_time), animateur_id: nullIfEmpty(v.animateur_id), active: !!v.active }; if (!payload.name) return; if (id) await q(sb.from("groups").update(payload).eq("id", id)); else await q(sb.from("groups").insert(payload)); toast("Groupe enregistré."); route(); }); });
+      $$("[data-group-form]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); var id = f.getAttribute("data-group-form"); var payload = { name: v.name, kind: v.kind || "atelier", level: v.level, day: v.day, start_time: nullIfEmpty(v.start_time), animateur_id: nullIfEmpty(v.animateur_id), meeting_url: nullIfEmpty(v.meeting_url), active: !!v.active }; if (!payload.name) return; if (id) await q(sb.from("groups").update(payload).eq("id", id)); else await q(sb.from("groups").insert(payload)); toast("Groupe enregistré."); route(); }); });
     }, 0);
     return html;
   };
 
   // ---------------------------------------------------------------- Séances (admin et animateur)
+  function launchBtn(s, cls, label) { return s.meeting_url ? '<a class="btn ' + (cls || "btn-primary") + ' btn-sm" href="' + esc(s.meeting_url) + '" target="_blank" rel="noopener">' + esc(label || "Lancer le cours") + "</a>" : ""; }
+  function sessionRow(s, upcoming) {
+    var g = s.groups || {};
+    return '<div class="row-card' + (isToday(s) ? " row-today" : "") + '"><div><div class="title">' + esc(sessionWhen(s)) + (isToday(s) ? ' <span class="pill pill-green">Aujourd\'hui</span>' : "") + '</div><div class="meta">' + esc((KINDS[g.kind] || "Atelier") + " " + (g.name || "")) + (s.meeting_url ? " · En ligne" : " · En présentiel") + (!upcoming && s.summary ? " · " + esc(s.summary) : "") + '</div></div><div class="actions">' + (upcoming ? launchBtn(s) : "") + '<a class="btn btn-secondary btn-sm" href="#seance/' + s.id + '">' + (upcoming ? "Salle de classe" : "Ouvrir") + "</a></div></div>";
+  }
   VIEWS.seances = async function () {
     var groups = await q(sb.from("groups").select("*, children:children!children_group_id_fkey(id), course_children:children!children_course_group_id_fkey(id)").eq("active", true).order("name"));
-    var sessions = await q(sb.from("sessions").select("*, groups(name, kind)").order("session_date", { ascending: false }).limit(60));
-    var html = pageHead(roleIs("admin") ? "Séances" : "Mes séances", "Créez la séance du jour, cochez les présents, notez ce qui s'est passé.");
+    var sessions = await q(sb.from("sessions").select("*, groups(name, kind)").order("session_date", { ascending: false }).limit(80));
+    var today = todayISO();
+    var upcoming = sessions.filter(function (s) { return s.session_date >= today; }).sort(function (a, b) { return (a.session_date + (a.start_time || "")) < (b.session_date + (b.start_time || "")) ? -1 : 1; });
+    var past = sessions.filter(function (s) { return s.session_date < today; });
+    var html = pageHead(roleIs("admin") ? "Séances" : "Mes séances", "Planifiez la séance, lancez la visio depuis la salle de classe, prenez vos notes pendant le cours, cochez les présents.", '<button class="btn btn-primary" type="button" data-toggle="new-session">Planifier une séance</button>');
     if (!groups.length) return html + '<div class="empty">' + (roleIs("admin") ? "Aucun groupe actif. Créez-en un dans l'onglet Groupes." : "Aucun groupe ne vous est attribué pour l'instant. L'administration vous en attribuera un.") + "</div>";
-    html += '<div class="card"><h3>Nouvelle séance</h3><form class="form" id="form-session"><div class="row">' + field("Groupe", '<select name="group_id">' + optionsFrom(groups, "", function (g) { return (KINDS[g.kind] || "Atelier") + " · " + g.name + " · " + (g.kind === "cours" ? (g.course_children || []) : (g.children || [])).length + " enfants"; }) + "</select>") + field("Date", input("session_date", todayISO(), "date", "required")) + '</div><div class="btn-row"><button class="btn btn-primary" type="submit">Ouvrir la feuille de présence</button></div></form></div>';
-    html += '<h3>Séances passées</h3><div class="list">' + (sessions.length ? sessions.map(function (s) { return '<div class="row-card"><div><div class="title">' + esc(fmtDate(s.session_date)) + " · " + esc(s.groups ? (KINDS[s.groups.kind] || "Atelier") + " " + s.groups.name : "") + '</div><div class="meta">' + esc(s.summary || "Pas de résumé") + '</div></div><div class="actions"><a class="btn btn-secondary btn-sm" href="#seance/' + s.id + '">Ouvrir</a></div></div>'; }).join("") : '<div class="empty">Aucune séance enregistrée.</div>') + "</div>";
+    html += '<div class="inline-form" id="new-session" hidden><h3>Nouvelle séance</h3><form class="form" id="form-session"><div class="row">' + field("Groupe", '<select name="group_id">' + optionsFrom(groups, "", function (g) { return (KINDS[g.kind] || "Atelier") + " · " + g.name + " · " + (g.kind === "cours" ? (g.course_children || []) : (g.children || [])).length + " enfants"; }) + "</select>") + field("Date", input("session_date", today, "date", "required")) + field("Heure", input("start_time", "", "text", 'placeholder="10 h 00"')) + "</div>" + field("Lien de visio", '<div class="input-row">' + input("meeting_url", "", "url", 'placeholder="https://meet.google.com/… ou vide pour une séance en présentiel"') + '<button class="btn btn-secondary btn-sm" type="button" id="btn-make-room">Créer une salle</button></div>', "Vide : le lien permanent du groupe est repris s'il existe. « Créer une salle » génère une salle Jitsi gratuite, sans compte pour les familles.") + '<div class="btn-row"><button class="btn btn-primary" type="submit">Ouvrir la salle de classe</button></div></form></div>';
+    var todays = upcoming.filter(isToday);
+    if (todays.length) html += '<div class="hero-card"><div><p class="eyebrow">Aujourd\'hui</p><h2>' + esc(todays[0].start_time ? "Cours à " + todays[0].start_time : "Cours du jour") + " · " + esc((todays[0].groups || {}).name || "") + '</h2><p class="muted">' + (todays[0].meeting_url ? "Lancez la visio, puis prenez vos notes dans la salle de classe. Les familles ont le bouton « Rejoindre » dans leur espace." : "Séance en présentiel. Ouvrez la salle de classe pour la feuille de présence et vos notes.") + '</p></div><div class="btn-row">' + launchBtn(todays[0], "btn-primary", "Lancer le cours") + '<a class="btn btn-secondary" href="#seance/' + todays[0].id + '">Salle de classe</a></div></div>';
+    html += '<h3>À venir</h3><div class="list">' + (upcoming.length ? upcoming.map(function (s) { return sessionRow(s, true); }).join("") : '<div class="empty">Aucune séance planifiée. Cliquez sur « Planifier une séance ».</div>') + "</div>";
+    html += '<h3>Passées</h3><div class="list">' + (past.length ? past.map(function (s) { return sessionRow(s, false); }).join("") : '<div class="empty">Aucune séance passée.</div>') + "</div>";
     setTimeout(function () {
-      $("#form-session").addEventListener("submit", async function (e) {
-        e.preventDefault(); var v = readForm(e.target);
+      var f = $("#form-session");
+      $("#btn-make-room").addEventListener("click", function () { var g = groups.find(function (x) { return x.id === f.group_id.value; }); f.meeting_url.value = jitsiRoom(g ? g.name : "cours", f.session_date.value); f.meeting_url.focus(); });
+      f.addEventListener("submit", async function (e) {
+        e.preventDefault(); var v = readForm(f);
         var existing = await q(sb.from("sessions").select("id").eq("group_id", v.group_id).eq("session_date", v.session_date).maybeSingle());
         if (existing) { location.hash = "seance/" + existing.id; return; }
-        var s = await q(sb.from("sessions").insert({ group_id: v.group_id, session_date: v.session_date, animateur_id: session.user.id }).select().single());
+        var g = groups.find(function (x) { return x.id === v.group_id; }) || {};
+        var payload = { group_id: v.group_id, session_date: v.session_date, start_time: nullIfEmpty(v.start_time) || g.start_time || null, meeting_url: nullIfEmpty(v.meeting_url) || g.meeting_url || null, animateur_id: session.user.id };
+        var s = await q(sb.from("sessions").insert(payload).select().single());
         location.hash = "seance/" + s.id;
       });
     }, 0);
     return html;
   };
+
+  // ---------------------------------------------------------------- Salle de classe (une séance : visio, notes, présences)
   VIEWS.seance = async function (id) {
     if (!id) { location.hash = "seances"; return ""; }
-    var s = await q(sb.from("sessions").select("*, groups(id, name, kind, level)").eq("id", id).single());
+    var s = await q(sb.from("sessions").select("*, groups(id, name, kind, level, meeting_url)").eq("id", id).single());
     var kids = await q(sb.from("children").select("id, first_name, status").or("group_id.eq." + s.group_id + ",course_group_id.eq." + s.group_id).neq("status", "parti").order("first_name"));
     var att = await q(sb.from("attendance").select("*").eq("session_id", id));
     var byKid = {}; att.forEach(function (a) { byKid[a.child_id] = a; });
     var canEdit = roleIs("admin") || roleIs("animateur");
-    var html = '<p><a href="#seances">← Toutes les séances</a></p>' + pageHead("Séance du " + fmtDate(s.session_date), (s.groups ? (KINDS[s.groups.kind] || "Atelier") + " " + s.groups.name : "") + " · " + (LEVELS[s.groups ? s.groups.level : ""] || ""));
-    html += '<form class="form" id="form-attendance"><div class="check-list">' + (kids.length ? kids.map(function (k) { var a = byKid[k.id]; return '<label class="check-row"><input type="checkbox" name="present-' + k.id + '"' + (!a || a.present ? " checked" : "") + (canEdit ? "" : " disabled") + '><span class="title">' + esc(k.first_name) + '</span><input type="text" name="note-' + k.id + '" value="' + esc(a ? a.note || "" : "") + '" placeholder="Note pour cet enfant (facultatif)"' + (canEdit ? "" : " disabled") + "></label>"; }).join("") : '<div class="empty">Aucun enfant dans ce groupe.</div>') + "</div>";
-    html += field("Ce qui a été fait, ce qui a bloqué", textarea("summary", s.summary, 4));
-    if (canEdit) html += '<div class="btn-row"><button class="btn btn-primary" type="submit">Enregistrer la séance</button><button class="btn btn-secondary" type="button" id="btn-delete-session">Supprimer cette séance</button></div>';
-    html += "</form>";
+    var g = s.groups || {};
+    var sub = (KINDS[g.kind] || "Atelier") + " " + (g.name || "") + " · " + (LEVELS[g.level] || "") + (s.start_time ? " · " + s.start_time : "");
+    var html = '<p><a href="#seances">← Toutes les séances</a></p>' + pageHead((canEdit ? "Salle de classe · " : "Séance du ") + fmtDate(s.session_date), sub, (s.meeting_url ? '<div class="btn-row">' + launchBtn(s, "btn-primary", canEdit ? "Lancer le cours" : "Rejoindre le cours") + "</div>" : ""));
+    html += '<div class="classroom"><div class="classroom-main">';
+    // visio
+    html += '<div class="card visio-card"><div class="page-head"><h3>Visio</h3>' + (s.meeting_url ? '<span class="pill pill-green">En ligne</span>' : '<span class="pill">En présentiel</span>') + "</div>";
+    if (s.meeting_url) {
+      html += '<p class="muted-sm">' + esc(s.meeting_url) + '</p><div class="btn-row">' + launchBtn(s, "btn-primary", canEdit ? "Lancer le cours" : "Rejoindre le cours") + '<button class="btn btn-secondary btn-sm" type="button" id="btn-copy-link">Copier le lien</button>' + (isEmbeddable(s.meeting_url) ? '<button class="btn btn-secondary btn-sm" type="button" id="btn-embed">Afficher la visio ici</button>' : "") + "</div>" + (isEmbeddable(s.meeting_url) ? '<div class="visio-frame" id="visio-frame" hidden></div>' : '<p class="muted-sm">La visio s\'ouvre dans un nouvel onglet ; gardez cette page ouverte à côté pour les notes et les présences.</p>');
+      if (canEdit) html += '<details class="muted-sm"><summary>Changer le lien</summary><form class="form" id="form-link" style="margin-top:10px"><div class="input-row">' + input("meeting_url", s.meeting_url, "url") + '<button class="btn btn-secondary btn-sm" type="submit">Enregistrer</button></div></form></details>';
+    } else if (canEdit) {
+      html += '<p class="muted-sm">Pas de lien de visio. Pour un cours en ligne, collez un lien Google Meet ou Zoom, ou créez une salle gratuite.</p><form class="form" id="form-link"><div class="input-row">' + input("meeting_url", "", "url", 'placeholder="https://meet.google.com/…"') + '<button class="btn btn-secondary btn-sm" type="button" id="btn-make-room">Créer une salle</button><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>';
+    } else {
+      html += '<p class="muted-sm">Séance en présentiel.</p>';
+    }
+    html += "</div>";
+    // notes pendant le cours (équipe)
+    if (canEdit) html += '<div class="card notes-card"><div class="page-head"><h3>Notes pendant le cours</h3><span class="muted-sm" id="notes-state">' + (s.notes ? "Enregistré" : "Rien pour l'instant") + '</span></div><div class="btn-row chips"><button class="btn btn-secondary btn-sm" type="button" data-stamp>Horodater</button><button class="btn btn-secondary btn-sm" type="button" data-insert="Devoirs : ">Devoirs</button><button class="btn btn-secondary btn-sm" type="button" data-insert="À revoir : ">À revoir</button><button class="btn btn-secondary btn-sm" type="button" data-insert="Question : ">Question</button><button class="btn btn-secondary btn-sm" type="button" data-insert="Bravo : ">Bravo</button></div><textarea id="session-notes" rows="14" placeholder="Ce qui est fait, les questions posées, les devoirs donnés, ce qui a bloqué… Enregistré automatiquement pendant que vous écrivez. Visible par l\'équipe, pas par les familles.">' + esc(s.notes || "") + "</textarea></div>";
+    html += "</div><aside class=\"classroom-side\">";
+    // présences
+    html += '<div class="card"><div class="page-head"><h3>Présences</h3><span class="muted-sm" id="att-state"></span></div><form class="form" id="form-attendance"><div class="check-list">' + (kids.length ? kids.map(function (k) { var a = byKid[k.id]; return '<label class="check-row" data-kid="' + k.id + '"><input type="checkbox" name="present-' + k.id + '"' + (!a || a.present ? " checked" : "") + (canEdit ? "" : " disabled") + '><span class="title">' + esc(k.first_name) + '</span><input type="text" name="note-' + k.id + '" value="' + esc(a ? a.note || "" : "") + '" placeholder="Note pour ' + esc(k.first_name) + ' (visible par ses parents)"' + (canEdit ? "" : " disabled") + "></label>"; }).join("") : '<div class="empty">Aucun enfant dans ce groupe.</div>') + "</div></form></div>";
+    // résumé pour les parents
+    html += '<div class="card"><h3>Résumé pour les familles</h3><form class="form" id="form-summary"><div class="field">' + textarea("summary", s.summary, 5) + "</div>" + (canEdit ? '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer le résumé</button><button class="btn btn-secondary btn-sm" type="button" id="btn-delete-session">Supprimer la séance</button></div>' : "") + "</form></div>";
+    html += "</aside></div>";
     setTimeout(function () {
-      if (!canEdit) return;
-      $("#form-attendance").addEventListener("submit", async function (e) {
-        e.preventDefault(); var v = readForm(e.target);
+      if ($("#btn-copy-link")) $("#btn-copy-link").addEventListener("click", function () { if (navigator.clipboard) navigator.clipboard.writeText(s.meeting_url).then(function () { toast("Lien copié."); }); });
+      if ($("#btn-embed")) $("#btn-embed").addEventListener("click", function () { var fr = $("#visio-frame"); if (!fr.innerHTML) fr.innerHTML = '<iframe src="' + esc(s.meeting_url) + '" allow="camera; microphone; display-capture; fullscreen; autoplay" allowfullscreen title="Visio"></iframe>'; fr.hidden = !fr.hidden; $("#btn-embed").textContent = fr.hidden ? "Afficher la visio ici" : "Masquer la visio"; });
+      if (!canEdit) { $$("#form-summary textarea").forEach(function (t) { t.disabled = true; }); return; }
+      if ($("#btn-make-room")) $("#btn-make-room").addEventListener("click", function () { $("#form-link").meeting_url.value = jitsiRoom(g.name || "cours", s.session_date); });
+      if ($("#form-link")) $("#form-link").addEventListener("submit", async function (e) { e.preventDefault(); var url = $("#form-link").meeting_url.value.trim() || null; await q(sb.from("sessions").update({ meeting_url: url }).eq("id", id)); toast(url ? "Lien enregistré." : "Lien retiré."); route(); });
+      // notes : enregistrement automatique
+      var ta = $("#session-notes"), st = $("#notes-state");
+      var saveNotes = debounce(async function () { st.textContent = "Enregistrement…"; var r = await sb.from("sessions").update({ notes: nullIfEmpty(ta.value) }).eq("id", id); st.textContent = r.error ? "Non enregistré : " + r.error.message : "Enregistré à " + nowHM(); }, 1200);
+      ta.addEventListener("input", function () { st.textContent = "Modifié…"; saveNotes(); });
+      window.addEventListener("beforeunload", function () { saveNotes.flush(); });
+      var insertAt = function (text) { var a = ta.selectionStart, b = ta.selectionEnd, v = ta.value; var prefix = (a === 0 || v[a - 1] === "\n") ? "" : "\n"; ta.value = v.slice(0, a) + prefix + text + v.slice(b); ta.selectionStart = ta.selectionEnd = a + prefix.length + text.length; ta.focus(); st.textContent = "Modifié…"; saveNotes(); };
+      $$("[data-stamp]").forEach(function (b) { b.addEventListener("click", function () { insertAt("[" + nowHM() + "] "); }); });
+      $$("[data-insert]").forEach(function (b) { b.addEventListener("click", function () { insertAt("[" + nowHM() + "] " + b.getAttribute("data-insert")); }); });
+      // présences : chaque changement est enregistré tout de suite
+      var attState = $("#att-state");
+      var saveRow = debounce(async function () {
+        var v = readForm($("#form-attendance"));
         var rows = kids.map(function (k) { return { session_id: id, child_id: k.id, present: !!v["present-" + k.id], note: nullIfEmpty(v["note-" + k.id] || "") }; });
-        if (rows.length) await q(sb.from("attendance").upsert(rows, { onConflict: "session_id,child_id" }));
-        await q(sb.from("sessions").update({ summary: nullIfEmpty(v.summary) }).eq("id", id));
-        toast("Séance enregistrée : " + rows.filter(function (r) { return r.present; }).length + " présent" + (rows.filter(function (r) { return r.present; }).length > 1 ? "s" : "") + ".");
-      });
+        if (!rows.length) return;
+        var r = await sb.from("attendance").upsert(rows, { onConflict: "session_id,child_id" });
+        attState.textContent = r.error ? "Non enregistré : " + r.error.message : rows.filter(function (x) { return x.present; }).length + " présent" + (rows.filter(function (x) { return x.present; }).length > 1 ? "s" : "") + " · enregistré à " + nowHM();
+      }, 600);
+      $$("#form-attendance input").forEach(function (el) { el.addEventListener(el.type === "checkbox" ? "change" : "input", function () { attState.textContent = "Enregistrement…"; saveRow(); }); });
+      $("#form-attendance").addEventListener("submit", function (e) { e.preventDefault(); saveRow.flush(); });
+      $("#form-summary").addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(e.target); await q(sb.from("sessions").update({ summary: nullIfEmpty(v.summary) }).eq("id", id)); saveRow.flush(); toast("Résumé enregistré. Les familles le voient dans la fiche de leur enfant."); });
       $("#btn-delete-session").addEventListener("click", async function () {
         var b = $("#btn-delete-session"); if (b.getAttribute("data-confirm") !== "1") { b.setAttribute("data-confirm", "1"); b.textContent = "Confirmer la suppression"; return; }
         await q(sb.from("sessions").delete().eq("id", id)); toast("Séance supprimée."); location.hash = "seances";

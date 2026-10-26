@@ -25,6 +25,7 @@ create table if not exists public.groups (
   level text not null check (level in ('explorateurs','batisseurs','argumentateurs','decideurs','college','lycee')),
   day text,
   start_time text,
+  meeting_url text,
   animateur_id uuid references auth.users(id) on delete set null,
   active boolean not null default true,
   created_at timestamptz not null default now()
@@ -60,6 +61,9 @@ create table if not exists public.sessions (
   id uuid primary key default gen_random_uuid(),
   group_id uuid not null references public.groups(id) on delete cascade,
   session_date date not null,
+  start_time text,
+  meeting_url text,
+  notes text,
   animateur_id uuid references auth.users(id) on delete set null,
   summary text,
   created_at timestamptz not null default now(),
@@ -145,6 +149,10 @@ alter table public.groups add constraint groups_level_check check (level in ('ex
 alter table public.children add column if not exists course_group_id uuid references public.groups(id) on delete set null;
 alter table public.children add column if not exists course_sessions_planned int not null default 30;
 alter table public.children add column if not exists school_class text;
+alter table public.groups add column if not exists meeting_url text;
+alter table public.sessions add column if not exists start_time text;
+alter table public.sessions add column if not exists meeting_url text;
+alter table public.sessions add column if not exists notes text;
 
 -- ---------------------------------------------------------------- Fonctions d'aide (rôle de l'utilisateur connecté)
 create or replace function public.my_role() returns text
