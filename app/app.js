@@ -16,6 +16,8 @@
   var WAIT_STATUS = { nouveau: "Nouveau", contacte: "Contacté", essai_planifie: "Essai planifié", inscrit: "Inscrit", sans_suite: "Sans suite" };
   var ROLES = { admin: "Administration", animateur: "Animateur", parent: "Parent" };
   var DAYS = ["samedi", "mercredi", "autre"];
+  var SLOT_KINDS = { essai: "Séance d'essai", individuel: "Séance individuelle", rattrapage: "Rattrapage" };
+  var DURATIONS = [30, 45, 60, 90, 120];
   var BADGES = ["Programmer un capteur", "Souder", "Imprimer une pièce en 3D", "Présenter sans notes", "Poser une question à un professionnel", "Finir un projet", "Aider un binôme"];
 
   // ---------------------------------------------------------------- utilitaires
@@ -56,7 +58,17 @@
   function debounce(fn, ms) { var h; var d = function () { clearTimeout(h); var a = arguments; h = setTimeout(function () { fn.apply(null, a); }, ms); }; d.flush = function () { clearTimeout(h); fn(); }; return d; }
   function sessionWhen(s) { return fmtDate(s.session_date) + (s.start_time ? " à " + s.start_time : ""); }
   function isToday(s) { return s.session_date === todayISO(); }
+  function fmtTime(iso) { var d = new Date(iso); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function dayKey(d) { d = d instanceof Date ? d : new Date(d); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function dayLabel(key) { var d = new Date(key + "T12:00:00"); var t = todayISO(); var tom = dayKey(new Date(Date.now() + 864e5)); return (key === t ? "Aujourd'hui · " : key === tom ? "Demain · " : "") + d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }); }
+  function localInput(iso) { if (!iso) return ""; var d = new Date(iso); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function timeSortable(t) { var m = /(\d{1,2})\s*[h:]\s*(\d{0,2})/.exec(t || ""); return m ? pad(+m[1]) + ":" + pad(+(m[2] || 0)) : "00:00"; }
+  function slotLabel(sl) { return (SLOT_KINDS[sl.kind] || "Séance") + (sl.subject ? " · " + sl.subject : ""); }
+  function pills(text) { return String(text || "").split(/[,;·]/).map(function (x) { return x.trim(); }).filter(Boolean).map(function (x) { return '<span class="pill">' + esc(x) + "</span>"; }).join(" "); }
   var ICONS = {
+    planning: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
+    reserver: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/>',
+    creneaux: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     accueil: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/>',
     liste: '<path d="M4 6h16M4 12h10M4 18h7"/>',
     familles: '<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9.5" r="2.4"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14.5 18.5a4 4 0 0 1 6 0"/>',
@@ -140,9 +152,9 @@
 
   // ---------------------------------------------------------------- navigation
   var NAV = {
-    admin: [["accueil", "Tableau de bord"], ["liste", "Liste d'attente"], ["familles", "Familles"], ["enfants", "Enfants"], ["groupes", "Groupes"], ["seances", "Séances"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["equipe", "Équipe"], ["compte", "Mon compte"]],
-    animateur: [["seances", "Mes séances"], ["enfants", "Mes enfants"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]],
-    parent: [["enfants", "Mes enfants"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]]
+    admin: [["accueil", "Tableau de bord"], ["liste", "Liste d'attente"], ["familles", "Familles"], ["enfants", "Enfants"], ["groupes", "Groupes"], ["seances", "Séances"], ["creneaux", "Créneaux"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["equipe", "Équipe"], ["compte", "Mon compte"]],
+    animateur: [["seances", "Mes séances"], ["creneaux", "Mes créneaux"], ["enfants", "Mes enfants"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]],
+    parent: [["enfants", "Mes enfants"], ["planning", "Planning"], ["reserver", "Réserver"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]]
   };
   var VIEWS = {};
 
@@ -293,6 +305,9 @@
       var gids = []; kids.forEach(function (k) { if (k.group_id) gids.push(k.group_id); if (k.course_group_id) gids.push(k.course_group_id); });
       if (gids.length) {
         var next = await q(sb.from("sessions").select("*, groups(name, kind)").in("group_id", gids).gte("session_date", todayISO()).order("session_date").order("start_time").limit(1));
+        var nb = await q(sb.from("bookings").select("*, slots(*)").eq("status", "confirme").gte("slots.starts_at", new Date().toISOString()));
+        nb = nb.filter(function (b) { return b.slots && new Date(b.slots.starts_at) >= new Date(); }).sort(function (a, b) { return a.slots.starts_at < b.slots.starts_at ? -1 : 1; });
+        if (nb.length && (!next.length || dayKey(nb[0].slots.starts_at) + "T" + fmtTime(nb[0].slots.starts_at) < next[0].session_date + "T" + timeSortable(next[0].start_time))) { var bk = nb[0], kid = kids.find(function (k) { return k.id === bk.child_id; }) || {}; out += '<div class="hero-card"><div><p class="eyebrow">' + (dayKey(bk.slots.starts_at) === todayISO() ? "Aujourd'hui" : "Prochaine séance") + '</p><h2>' + esc(dayLabel(dayKey(bk.slots.starts_at)).replace(/^.*· /, "") + " à " + fmtTime(bk.slots.starts_at)) + '</h2><p class="muted">' + esc(slotLabel(bk.slots) + " · " + (kid.first_name || "")) + (bk.slots.mode === "visio" ? " · en ligne" : " · en présentiel") + '</p></div><div class="btn-row">' + (bk.slots.meeting_url ? launchBtn(bk.slots, "btn-primary", "Rejoindre la séance") : "") + '<a class="btn btn-secondary" href="#planning">Planning</a></div></div>'; next = []; }
         if (next.length) { var n = next[0]; var who = kids.filter(function (k) { return k.group_id === n.group_id || k.course_group_id === n.group_id; }).map(function (k) { return k.first_name; }).join(" et "); out += '<div class="hero-card"><div><p class="eyebrow">' + (isToday(n) ? "Aujourd'hui" : "Prochaine séance") + '</p><h2>' + esc(sessionWhen(n)) + '</h2><p class="muted">' + esc((KINDS[(n.groups || {}).kind] || "Atelier") + " " + ((n.groups || {}).name || "") + " · " + who) + (n.meeting_url ? " · en ligne" : " · en présentiel") + '</p></div><div class="btn-row">' + (n.meeting_url ? launchBtn(n, "btn-primary", "Rejoindre le cours") : "") + '<a class="btn btn-secondary" href="#seance/' + n.id + '">Détails</a></div></div>'; }
       }
       for (var i = 0; i < kids.length; i++) out += await childDetailHtml(kids[i]);
@@ -485,6 +500,100 @@
     return html;
   };
 
+  // ---------------------------------------------------------------- PARENT : planning (séances de groupe + réservations)
+  VIEWS.planning = async function () {
+    if (!roleIs("parent")) { location.hash = "seances"; return ""; }
+    var kids = await q(sb.from("children").select("id, first_name, group_id, course_group_id").order("first_name"));
+    if (!kids.length) return pageHead("Planning") + '<div class="empty">Votre compte n\'est pas encore relié à une famille. Écrivez-nous sur WhatsApp avec l\'adresse e-mail de ce compte.</div>';
+    var gids = []; kids.forEach(function (k) { if (k.group_id) gids.push(k.group_id); if (k.course_group_id) gids.push(k.course_group_id); });
+    var since = dayKey(new Date(Date.now() - 30 * 864e5));
+    var sessions = gids.length ? await q(sb.from("sessions").select("*, groups(name, kind)").in("group_id", gids).gte("session_date", since).order("session_date")) : [];
+    var bookings = await q(sb.from("bookings").select("*, slots(*)").eq("status", "confirme"));
+    var anims = await q(sb.from("animateurs").select("*")); var animName = function (id) { var a = anims.find(function (x) { return x.id === id; }); return a ? a.full_name : ""; };
+    var events = [];
+    sessions.forEach(function (s) { var who = kids.filter(function (k) { return k.group_id === s.group_id || k.course_group_id === s.group_id; }).map(function (k) { return k.first_name; }).join(", "); events.push({ key: s.session_date + "T" + timeSortable(s.start_time), day: s.session_date, time: s.start_time || "", title: (KINDS[(s.groups || {}).kind] || "Atelier") + " " + ((s.groups || {}).name || ""), sub: who + (s.meeting_url ? " · en ligne" : " · en présentiel"), url: s.meeting_url, href: "#seance/" + s.id, done: !!s.summary }); });
+    bookings.forEach(function (b) { if (!b.slots) return; var k = kids.find(function (x) { return x.id === b.child_id; }) || {}; events.push({ key: dayKey(b.slots.starts_at) + "T" + fmtTime(b.slots.starts_at), day: dayKey(b.slots.starts_at), time: fmtTime(b.slots.starts_at), title: slotLabel(b.slots), sub: (k.first_name || "") + " · avec " + animName(b.slots.animateur_id) + (b.slots.mode === "visio" ? " · en ligne" : " · en présentiel") + " · " + b.slots.duration_min + " min", url: b.slots.meeting_url, href: "#reserver", note: b.note }); });
+    events.sort(function (a, b) { return a.key < b.key ? -1 : 1; });
+    var today = todayISO(); var upcoming = events.filter(function (e) { return e.day >= today; }), past = events.filter(function (e) { return e.day < today; }).reverse();
+    var row = function (e, up) { return '<div class="row-card' + (e.day === today ? " row-today" : "") + '"><div><div class="title">' + (e.time ? '<span class="time">' + esc(e.time) + "</span> " : "") + esc(e.title) + '</div><div class="meta">' + esc(e.sub) + (e.note ? " · " + esc(e.note) : "") + '</div></div><div class="actions">' + (up && e.url ? launchBtn({ meeting_url: e.url }, "btn-primary", "Rejoindre") : "") + '<a class="btn btn-secondary btn-sm" href="' + e.href + '">Détails</a></div></div>'; };
+    var byDay = function (list, up) { var out = "", last = ""; list.forEach(function (e) { if (e.day !== last) { out += '<h3 class="day-head">' + esc(dayLabel(e.day)) + "</h3>"; last = e.day; } out += row(e, up); }); return out; };
+    var html = pageHead("Planning", "Les séances de groupe et les séances réservées, pour tous vos enfants.", '<a class="btn btn-primary" href="#reserver">Réserver une séance</a>');
+    html += '<div class="list">' + (upcoming.length ? byDay(upcoming, true) : '<div class="empty">Rien de planifié pour l\'instant. Les séances de groupe apparaissent dès que l\'animateur les planifie ; vous pouvez aussi réserver une séance d\'essai ou individuelle.</div>') + "</div>";
+    if (past.length) html += '<h3>30 derniers jours</h3><div class="list">' + byDay(past.slice(0, 20), false) + "</div>";
+    return html;
+  };
+
+  // ---------------------------------------------------------------- PARENT : réserver une séance avec un animateur
+  VIEWS.reserver = async function () {
+    if (!roleIs("parent")) { location.hash = "creneaux"; return ""; }
+    var kids = await q(sb.from("children").select("id, first_name, status").neq("status", "parti").order("first_name"));
+    if (!kids.length) return pageHead("Réserver une séance") + '<div class="empty">Votre compte n\'est pas encore relié à une famille. Écrivez-nous sur WhatsApp avec l\'adresse e-mail de ce compte.</div>';
+    var nowIso = new Date().toISOString();
+    var anims = await q(sb.from("animateurs").select("*").order("full_name"));
+    var slots = await q(sb.from("slots").select("*").gte("starts_at", nowIso).order("starts_at"));
+    var counts = await q(sb.rpc("slot_counts")); var booked = {}; (counts || []).forEach(function (c) { booked[c.slot_id] = c.booked; });
+    var mine = await q(sb.from("bookings").select("*, slots(*)").order("created_at", { ascending: false }));
+    var kidName = function (id) { var k = kids.find(function (x) { return x.id === id; }); return k ? k.first_name : ""; };
+    var html = pageHead("Réserver une séance", "Une séance d'essai, une séance individuelle ou un rattrapage avec un animateur. La réservation est confirmée tout de suite ; vous pouvez l'annuler jusqu'à l'heure de la séance.");
+    var active = mine.filter(function (b) { return b.status === "confirme" && b.slots && b.slots.starts_at >= nowIso; });
+    var old = mine.filter(function (b) { return !(b.status === "confirme" && b.slots && b.slots.starts_at >= nowIso); });
+    html += '<div class="card"><h3>Mes réservations</h3>' + (active.length ? '<div class="list">' + active.map(function (b) { var a = anims.find(function (x) { return x.id === b.slots.animateur_id; }); return '<div class="row-card' + (dayKey(b.slots.starts_at) === todayISO() ? " row-today" : "") + '"><div><div class="title">' + esc(dayLabel(dayKey(b.slots.starts_at)) + " à " + fmtTime(b.slots.starts_at)) + ' <span class="pill pill-green">Confirmée</span></div><div class="meta">' + esc(slotLabel(b.slots) + " · " + kidName(b.child_id) + " · avec " + (a ? a.full_name : "l'animateur") + (b.slots.mode === "visio" ? " · en ligne" : " · en présentiel") + " · " + b.slots.duration_min + " min") + (b.slots.note ? " · " + esc(b.slots.note) : "") + '</div></div><div class="actions">' + (b.slots.meeting_url ? launchBtn(b.slots, "btn-primary", "Rejoindre") : "") + '<button class="btn btn-secondary btn-sm" type="button" data-cancel-booking="' + b.id + '">Annuler</button></div></div>'; }).join("") + "</div>" : '<p class="muted">Aucune séance réservée pour l\'instant.</p>');
+    if (old.length) html += '<details class="muted-sm" style="margin-top:8px"><summary>Séances passées ou annulées (' + old.length + ')</summary><div class="list" style="margin-top:10px">' + old.slice(0, 15).map(function (b) { return '<div class="row-card"><div><div class="title">' + esc(b.slots ? dayLabel(dayKey(b.slots.starts_at)) + " à " + fmtTime(b.slots.starts_at) : "") + ' <span class="pill">' + (b.status === "annule" ? "Annulée" : "Passée") + '</span></div><div class="meta">' + esc((b.slots ? slotLabel(b.slots) : "") + " · " + kidName(b.child_id)) + (b.note ? '</div><div class="report-box" style="margin-top:6px">' + esc(b.note) : "") + "</div></div></div>"; }).join("") + "</div></details>";
+    html += "</div>";
+    var pick = kids.length > 1 ? '<select name="child_id">' + optionsFrom(kids, "", function (k) { return k.first_name; }) + "</select>" : '<input type="hidden" name="child_id" value="' + kids[0].id + '">';
+    html += '<h3>Les animateurs et leurs créneaux</h3><div class="anim-grid">' + (anims.length ? anims.map(function (a) {
+      var mySlots = slots.filter(function (sl) { return sl.animateur_id === a.id; });
+      var initials = (a.full_name || "?").split(/\s+/).map(function (w) { return w[0] || ""; }).join("").slice(0, 2).toUpperCase();
+      var body = '<div class="anim-head"><div class="avatar">' + esc(initials) + '</div><div><div class="title">' + esc(a.full_name || "Animateur") + '</div><div class="badge-list" style="margin-top:4px">' + (pills(a.subjects) || '<span class="muted-sm">Matières à préciser</span>') + "</div></div></div>" + (a.bio ? '<p class="muted-sm">' + esc(a.bio) + "</p>" : "");
+      body += mySlots.length ? '<div class="slot-list">' + mySlots.map(function (sl) {
+        var n = booked[sl.id] || 0, left = sl.capacity - n;
+        var already = active.find(function (b) { return b.slot_id === sl.id; });
+        return '<div class="slot"><div><div class="title"><span class="time">' + esc(fmtTime(sl.starts_at)) + "</span> " + esc(dayLabel(dayKey(sl.starts_at))) + '</div><div class="meta">' + esc(slotLabel(sl) + " · " + sl.duration_min + " min" + (sl.mode === "visio" ? " · en ligne" : " · en présentiel") + " · " + (left > 0 ? left + " place" + (left > 1 ? "s" : "") : "complet")) + (sl.note ? " · " + esc(sl.note) : "") + "</div></div>" + (already ? '<span class="pill pill-green">Réservé pour ' + esc(kidName(already.child_id)) + "</span>" : left > 0 ? '<form class="book-form" data-book="' + sl.id + '">' + pick + '<button class="btn btn-primary btn-sm" type="submit">Réserver</button></form>' : '<span class="pill">Complet</span>') + "</div>";
+      }).join("") + "</div>" : '<p class="muted-sm">Pas de créneau publié pour l\'instant.</p>';
+      return '<div class="card anim-card">' + body + "</div>";
+    }).join("") : '<div class="empty">Aucun animateur n\'a encore publié de créneau. Revenez bientôt ou écrivez-nous sur WhatsApp.</div>') + "</div>";
+    setTimeout(function () {
+      $$("[data-book]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); var r = await sb.from("bookings").insert({ slot_id: f.getAttribute("data-book"), child_id: v.child_id }); if (r.error) { toast(/complet|passé/i.test(r.error.message) ? r.error.message.replace(/^.*?:\s*/, "") : "Réservation impossible : " + r.error.message, true); return; } toast("Réservation confirmée pour " + kidName(v.child_id) + "."); route(); }); });
+      $$("[data-cancel-booking]").forEach(function (b) { b.addEventListener("click", async function () { if (b.getAttribute("data-confirm") !== "1") { b.setAttribute("data-confirm", "1"); b.textContent = "Confirmer l'annulation"; return; } await q(sb.from("bookings").update({ status: "annule" }).eq("id", b.getAttribute("data-cancel-booking"))); toast("Réservation annulée."); route(); }); });
+    }, 0);
+    return html;
+  };
+
+  // ---------------------------------------------------------------- ANIMATEUR et ADMIN : créneaux publiés et réservations reçues
+  VIEWS.creneaux = async function () {
+    if (roleIs("parent")) { location.hash = "reserver"; return ""; }
+    var team = roleIs("admin") ? await q(sb.from("profiles").select("id, full_name, email, role").in("role", ["animateur", "admin"]).order("full_name")) : [profile];
+    var since = new Date(Date.now() - 14 * 864e5).toISOString();
+    var qb = sb.from("slots").select("*, bookings(*, children(first_name, families(parent_name, phone)))").gte("starts_at", since).order("starts_at");
+    if (!roleIs("admin")) qb = qb.eq("animateur_id", profile.id);
+    var slots = await q(qb);
+    var animName = function (id) { var a = team.find(function (t) { return t.id === id; }); return a ? (a.full_name || a.email) : "Animateur"; };
+    var form = function (sl) { sl = sl || {}; return '<form class="form" data-slot-form="' + (sl.id || "") + '"><div class="row">' + (roleIs("admin") ? field("Animateur", '<select name="animateur_id">' + optionsFrom(team, sl.animateur_id || profile.id, function (t) { return t.full_name || t.email; }) + "</select>") : "") + field("Date et heure", input("starts_at", localInput(sl.starts_at), "datetime-local", "required")) + field("Durée", '<select name="duration_min">' + DURATIONS.map(function (d) { return '<option value="' + d + '"' + ((sl.duration_min || 60) === d ? " selected" : "") + ">" + d + " min</option>"; }).join("") + "</select>") + "</div><div class=\"row\">" + field("Type", '<select name="kind">' + options(SLOT_KINDS, sl.kind || "individuel") + "</select>") + field("Matière ou thème", input("subject", sl.subject, "text", 'placeholder="Mathématiques 4e, Robotique, Prise de parole"')) + field("Places", input("capacity", sl.capacity || 1, "number", 'min="1" max="8"')) + "</div><div class=\"row\">" + field("Mode", '<select name="mode"><option value="visio"' + (sl.mode !== "presentiel" ? " selected" : "") + '>En ligne</option><option value="presentiel"' + (sl.mode === "presentiel" ? " selected" : "") + ">En présentiel</option></select>") + field("Lien de visio", '<div class="input-row">' + input("meeting_url", sl.meeting_url, "url", 'placeholder="https://meet.google.com/…"') + '<button class="btn btn-secondary btn-sm" type="button" data-make-room>Créer une salle</button></div>') + "</div>" + field("Note visible par les familles", input("note", sl.note, "text", 'placeholder="Apporter le cahier, lien envoyé la veille…"')) + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">' + (sl.id ? "Enregistrer" : "Publier le créneau") + "</button></div></form>"; };
+    var html = pageHead(roleIs("admin") ? "Créneaux" : "Mes créneaux", "Publiez des créneaux (séance d'essai, individuelle, rattrapage) : les familles les réservent depuis leur espace, vous voyez qui vient.", '<button class="btn btn-primary" type="button" data-toggle="new-slot">Publier un créneau</button>');
+    html += '<div class="inline-form" id="new-slot" hidden><h3>Nouveau créneau</h3>' + form() + "</div>";
+    if (!(profile.subjects && profile.bio)) html += '<p class="notice">Complétez votre fiche (matières, présentation) dans <a href="#compte">Mon compte</a> : les familles la voient avant de réserver.</p>';
+    var nowIso = new Date().toISOString();
+    var upcoming = slots.filter(function (sl) { return sl.starts_at >= nowIso; }), past = slots.filter(function (sl) { return sl.starts_at < nowIso; }).reverse();
+    var row = function (sl) {
+      var bks = (sl.bookings || []).filter(function (b) { return b.status === "confirme"; });
+      var isPast = sl.starts_at < nowIso;
+      return '<div class="row-card' + (dayKey(sl.starts_at) === todayISO() ? " row-today" : "") + '"><div><div class="title"><span class="time">' + esc(fmtTime(sl.starts_at)) + "</span> " + esc(dayLabel(dayKey(sl.starts_at))) + " · " + esc(slotLabel(sl)) + ' <span class="pill' + (bks.length >= sl.capacity ? "" : " pill-green") + '">' + bks.length + " / " + sl.capacity + '</span></div><div class="meta">' + esc([roleIs("admin") ? animName(sl.animateur_id) : "", sl.duration_min + " min", sl.mode === "visio" ? (sl.meeting_url ? "En ligne" : "En ligne · lien manquant") : "En présentiel", sl.note].filter(Boolean).join(" · ")) + "</div>" +
+        (bks.length ? '<div class="list" style="margin-top:10px">' + bks.map(function (b) { var c = b.children || {}, f = c.families || {}; return '<div class="booking"><div><strong>' + esc(c.first_name || "Enfant") + "</strong>" + (f.parent_name ? ' <span class="muted-sm">· ' + esc(f.parent_name) + (f.phone ? ' · <a href="' + waLink(f.phone) + '" target="_blank" rel="noopener">' + esc(f.phone) + "</a>" : "") + "</span>" : "") + '</div><form class="input-row" data-booking-note="' + b.id + '">' + input("note", b.note, "text", 'placeholder="Mot pour les parents après la séance"') + '<button class="btn btn-secondary btn-sm" type="submit">Enregistrer</button>' + (isPast ? "" : '<button class="btn btn-secondary btn-sm" type="button" data-cancel-booking="' + b.id + '">Annuler</button>') + "</form></div>"; }).join("") + "</div>" : '<p class="muted-sm" style="margin-top:6px">Personne n\'a encore réservé.</p>') +
+        '<div id="slot-' + sl.id + '" hidden><div class="inline-form" style="margin-top:12px">' + form(sl) + "</div></div></div>" +
+        '<div class="actions">' + (!isPast && sl.meeting_url ? launchBtn(sl, "btn-primary", "Lancer") : "") + '<button class="btn btn-secondary btn-sm" type="button" data-toggle="slot-' + sl.id + '">Modifier</button>' + (bks.length ? "" : '<button class="btn btn-secondary btn-sm" type="button" data-delete-slot="' + sl.id + '">Supprimer</button>') + "</div></div>";
+    };
+    html += '<h3>À venir</h3><div class="list">' + (upcoming.length ? upcoming.map(row).join("") : '<div class="empty">Aucun créneau publié. Cliquez sur « Publier un créneau » : une séance d\'essai de 45 minutes en ligne est un bon début.</div>') + "</div>";
+    if (past.length) html += '<h3>14 derniers jours</h3><div class="list">' + past.map(row).join("") + "</div>";
+    setTimeout(function () {
+      $$("[data-make-room]").forEach(function (b) { b.addEventListener("click", function () { var f = b.closest("form"); f.meeting_url.value = jitsiRoom((profile.full_name || "seance") + "-" + (f.starts_at.value || "").slice(0, 10), ""); }); });
+      $$("[data-slot-form]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); var id = f.getAttribute("data-slot-form"); if (!v.starts_at) { toast("Indiquez la date et l'heure.", true); return; } var payload = { animateur_id: v.animateur_id || profile.id, starts_at: new Date(v.starts_at).toISOString(), duration_min: +v.duration_min || 60, kind: v.kind, subject: nullIfEmpty(v.subject), capacity: Math.min(8, Math.max(1, +v.capacity || 1)), mode: v.mode, meeting_url: nullIfEmpty(v.meeting_url), note: nullIfEmpty(v.note) }; if (id) await q(sb.from("slots").update(payload).eq("id", id)); else await q(sb.from("slots").insert(payload)); toast(id ? "Créneau enregistré." : "Créneau publié : les familles peuvent le réserver."); route(); }); });
+      $$("[data-booking-note]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); await q(sb.from("bookings").update({ note: nullIfEmpty(v.note) }).eq("id", f.getAttribute("data-booking-note"))); toast("Mot enregistré : les parents le voient dans leur espace."); }); });
+      $$("[data-cancel-booking]").forEach(function (b) { b.addEventListener("click", async function () { if (b.getAttribute("data-confirm") !== "1") { b.setAttribute("data-confirm", "1"); b.textContent = "Confirmer"; return; } await q(sb.from("bookings").update({ status: "annule" }).eq("id", b.getAttribute("data-cancel-booking"))); toast("Réservation annulée. Prévenez la famille."); route(); }); });
+      $$("[data-delete-slot]").forEach(function (b) { b.addEventListener("click", async function () { if (b.getAttribute("data-confirm") !== "1") { b.setAttribute("data-confirm", "1"); b.textContent = "Confirmer"; return; } await q(sb.from("slots").delete().eq("id", b.getAttribute("data-delete-slot"))); toast("Créneau supprimé."); route(); }); });
+    }, 0);
+    return html;
+  };
+
   // ---------------------------------------------------------------- Rencontres métiers (tous)
   VIEWS.rencontres = async function () {
     var meetings = await q(sb.from("meetings").select("*, meeting_attendance(child_id)").order("meeting_at", { ascending: false }));
@@ -526,10 +635,11 @@
   // ---------------------------------------------------------------- Mon compte (animateur et parent)
   VIEWS.compte = async function () {
     var html = pageHead("Mon compte");
-    html += '<div class="detail-grid"><form class="form card" id="form-profile">' + field("Nom", input("full_name", profile.full_name)) + field("WhatsApp", input("phone", profile.phone, "tel")) + field("E-mail", input("email", profile.email, "email", "disabled")) + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>';
+    var team = roleIs("admin") || roleIs("animateur");
+    html += '<div class="detail-grid"><form class="form card" id="form-profile">' + field("Nom", input("full_name", profile.full_name)) + field("WhatsApp", input("phone", profile.phone, "tel")) + field("E-mail", input("email", profile.email, "email", "disabled")) + (team ? '<h3 style="margin-top:8px">Ma fiche, vue par les familles</h3>' + field("Matières", input("subjects", profile.subjects, "text", 'placeholder="Mathématiques collège, Physique lycée, Robotique"'), "Séparées par des virgules. Affichées sur la page Réserver.") + field("Présentation", textarea("bio", profile.bio, 3), "Deux ou trois phrases : votre parcours, ce que vous aimez faire avec les enfants.") : "") + '<div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></form>';
     html += '<form class="form card" id="form-password"><h3>Changer le mot de passe</h3>' + field("Nouveau mot de passe", input("password", "", "password", 'minlength="8" autocomplete="new-password"'), "8 caractères au minimum.") + '<div class="btn-row"><button class="btn btn-secondary btn-sm" type="submit">Mettre à jour</button></div></form></div>';
     setTimeout(function () {
-      $("#form-profile").addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(e.target); await q(sb.from("profiles").update({ full_name: v.full_name, phone: nullIfEmpty(v.phone) }).eq("id", profile.id)); profile.full_name = v.full_name; $("#user-name").textContent = v.full_name || profile.email; toast("Compte enregistré."); });
+      $("#form-profile").addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(e.target); var payload = { full_name: v.full_name, phone: nullIfEmpty(v.phone) }; if (team) { payload.subjects = nullIfEmpty(v.subjects || ""); payload.bio = nullIfEmpty(v.bio || ""); } await q(sb.from("profiles").update(payload).eq("id", profile.id)); profile.full_name = v.full_name; profile.subjects = payload.subjects; profile.bio = payload.bio; $("#user-name").textContent = v.full_name || profile.email; toast("Compte enregistré."); });
       $("#form-password").addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(e.target); if ((v.password || "").length < 8) { toast("8 caractères au minimum.", true); return; } var r = await sb.auth.updateUser({ password: v.password }); if (r.error) toast(r.error.message, true); else { toast("Mot de passe mis à jour."); e.target.reset(); } });
     }, 0);
     return html;

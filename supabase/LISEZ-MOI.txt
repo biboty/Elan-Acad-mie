@@ -76,3 +76,13 @@ PLUS TARD
    - Play Store : possible à partir de cette PWA (outil PWABuilder, compte développeur 25 USD une fois, test fermé
      12 testeurs pendant 14 jours pour un compte personnel). App Store : 99 USD/an, un Mac, et Apple refuse les
      simples sites emballés : à faire en V2 avec des fonctions natives (notifications).
+
+9. RÉSERVATION DE SÉANCES AVEC UN ANIMATEUR, PLANNING (ajouté le 26 octobre 2026)
+   - Base déjà créée avant cette date : exécuter une fois supabase/migration-2026-10-26-reservations.sql (fait le 26 octobre).
+   - Animateur (et administrateur) : Mon compte > « Ma fiche » (matières, présentation), puis Mes créneaux > Publier un
+     créneau : date et heure, durée, type (séance d'essai, individuelle, rattrapage), matière, places (1 à 8), en ligne
+     ou en présentiel, lien de visio (« Créer une salle » pour une salle Jitsi), note visible par les familles.
+     Il voit qui a réservé (prénom, parent, WhatsApp), lance la visio, écrit un mot aux parents après la séance.
+   - Parent : Réserver > choisit l'animateur et le créneau > Réserver : confirmé tout de suite si une place reste et si
+     le créneau n'est pas passé (la base vérifie). Annulation possible jusqu'à l'heure de la séance.
+   - Parent : Planning = séances de groupe + séances réservées, jour par jour, bouton « Rejoindre » quand c'est en ligne.

@@ -110,3 +110,18 @@ details summary { cursor: pointer; }
 select.status { font: inherit; font-size: 0.88rem; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 6px 10px; }
 .muted-sm { color: var(--ink3); font-size: 0.85rem; }
 .progress-block + .progress-block { margin-top: 10px; }
+
+/* Planning, réservation, créneaux */
+.time { display: inline-block; font-family: var(--font-display); font-weight: 600; color: var(--brand); background: var(--bg2); border-radius: 8px; padding: 2px 8px; margin-right: 4px; }
+.day-head { font-size: 1rem; color: var(--ink2); margin-top: 8px; }
+.day-head::first-letter { text-transform: uppercase; }
+.anim-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.anim-card { gap: 12px; }
+.anim-head { display: flex; align-items: center; gap: 14px; }
+.avatar { flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; }
+.slot-list { display: flex; flex-direction: column; gap: 8px; }
+.slot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--bg); }
+.slot .meta { color: var(--ink3); font-size: 0.88rem; }
+.book-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.book-form select { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; }
+.booking { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--bg); }
