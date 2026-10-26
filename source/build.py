@@ -52,7 +52,7 @@ def footer():
     </div>
     <div>
       <h4>Parents</h4>
-      <ul><li><a href="inscription.html">Liste d'attente</a></li><li><a href="app/">Espace famille (connexion)</a></li><li><a href="faq.html">Questions fréquentes</a></li><li><a href="a-propos.html#securite">Sécurité des enfants</a></li><li><a href="mentions-legales.html">Mentions légales</a></li></ul>
+      <ul><li><a href="inscription.html">Liste d'attente</a></li><li><a href="app/">Espace famille (connexion)</a></li><li><a href="faq.html">Questions fréquentes</a></li><li><a href="a-propos.html#securite">Sécurité des enfants</a></li><li><a href="candidature.html">Rejoindre l'équipe</a></li><li><a href="mentions-legales.html">Mentions légales</a></li></ul>
     </div>
     <div>
       <h4>Contact</h4>
@@ -560,6 +560,67 @@ PAGES["mentions-legales.html"] = dict(title="Mentions légales", description="Me
 </section>
 ''')
 
+# ---------------------------------------------------------------- Candidature (test des animateurs en trois étapes)
+PAGES["candidature.html"] = dict(title="Rejoindre l'équipe", description="Enseignants, étudiants ingénieurs, professionnels : rejoignez l'équipe d'Élan Académie. Un test en trois étapes, 30 minutes, depuis votre navigateur.", body=f'''
+<section class="section">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Rejoindre l'équipe</p><h1>Animer un atelier ou un cours chez Élan Académie</h1><p class="lead">Nous cherchons des personnes qui savent expliquer, qui aiment les enfants et qui tiennent un groupe. Le test prend 30 minutes, depuis votre navigateur, en trois étapes. Le fondateur regarde chaque candidature et vous répond sous une semaine.</p></div>
+    <div class="grid grid-3" style="margin-bottom:28px">
+      <div class="step"><span class="when">Étape 1</span><h3>Un QCM de 10 questions</h3><p>Dans votre matière et votre niveau. Dix minutes, sans documents.</p></div>
+      <div class="step"><span class="when">Étape 2</span><h3>Trois minutes face caméra</h3><p>Qui vous êtes, pourquoi vous voulez enseigner, ce que vous faites quand un enfant décroche.</p></div>
+      <div class="step"><span class="when">Étape 3</span><h3>Une situation à corriger</h3><p>Le travail d'un élève, avec une erreur. Vous la trouvez et vous l'expliquez à l'oral, comme en séance.</p></div>
+    </div>
+    <div class="form-wrap" id="cand">
+      <div class="cand-progress" id="cand-progress" aria-hidden="true"><span class="on">Vous</span><span>QCM</span><span>Présentation</span><span>Situation</span><span>Envoi</span></div>
+
+      <form class="form" id="cand-form" novalidate>
+        <div class="row">
+          <div class="field"><label for="c-nom">Nom et prénom</label><input id="c-nom" name="full_name" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="c-email">E-mail</label><input id="c-email" name="email" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="c-tel">WhatsApp</label><input id="c-tel" name="phone" type="tel" autocomplete="tel" placeholder="06 12 34 56 78"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="c-matiere">Matière</label><select id="c-matiere" name="subject"><option>Mathématiques</option><option>Physique-chimie</option><option>Robotique et programmation</option><option>Prise de parole et argumentation</option></select></div>
+          <div class="field"><label for="c-niveau">Niveau</label><select id="c-niveau" name="level"><option value="college">Collège</option><option value="lycee">Lycée</option></select><span class="hint">Pour la robotique et la prise de parole, le niveau sert surtout à la situation.</span></div>
+        </div>
+        <div class="field"><label for="c-exp">Votre expérience en deux phrases</label><textarea id="c-exp" name="experience" placeholder="Études, cours particuliers, encadrement de jeunes, projets…"></textarea></div>
+        <p class="error" id="cand-erreur" aria-live="polite"></p>
+        <div class="btn-row"><button class="btn btn-primary btn-lg" type="submit">Commencer le test</button></div>
+        <p class="small muted">Vos réponses et vos vidéos ne sont vues que par le fondateur, pour cette candidature. Vous pouvez demander leur suppression à tout moment.</p>
+      </form>
+
+      <div id="cand-quiz" hidden>
+        <h2 style="font-size:1.4rem">Étape 1 · QCM</h2>
+        <p class="muted">Une seule réponse par question. Répondez à tout, puis validez.</p>
+        <form class="form" id="quiz-form" novalidate><div id="quiz-list"></div><p class="error" id="quiz-erreur" aria-live="polite"></p><div class="btn-row"><button class="btn btn-primary btn-lg" type="submit">Valider mes réponses</button></div></form>
+      </div>
+
+      <div id="cand-video1" hidden>
+        <h2 style="font-size:1.4rem">Étape 2 · Présentation</h2>
+        <p class="muted">Trois minutes au maximum. Présentez-vous, dites pourquoi vous voulez enseigner chez nous et ce que vous faites quand un enfant décroche. Vous pouvez recommencer autant de fois que vous voulez avant d'envoyer.</p>
+        <div class="recorder" data-step="1" data-max="180"></div>
+      </div>
+
+      <div id="cand-video2" hidden>
+        <h2 style="font-size:1.4rem">Étape 3 · Situation</h2>
+        <div class="card" style="margin:14px 0"><p class="eyebrow" id="sit-title"></p><p id="sit-text"></p></div>
+        <p class="muted">Quatre minutes au maximum. Trouvez l'erreur, puis expliquez-la à l'oral comme vous le feriez face à l'élève : avec ses mots, sans le brusquer.</p>
+        <div class="recorder" data-step="2" data-max="240"></div>
+      </div>
+
+      <div class="form-status" id="cand-done" hidden>
+        <p class="eyebrow">Candidature envoyée</p>
+        <h2 style="font-size:1.5rem">Merci. Le fondateur regarde votre test et vous répond sous une semaine.</h2>
+        <p class="muted">Si vous avez une question entre-temps, écrivez-nous sur WhatsApp.</p>
+        <div class="btn-row"><a class="btn btn-primary" data-wa="Bonjour, je viens de passer le test pour rejoindre l'équipe d'Élan Académie." href="#">WhatsApp</a><a class="btn btn-secondary" href="index.html">Retour au site</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="assets/candidature.js"></script>
+''')
+
 def page_html(name, p, full=True):
     title = p["title"] if name == "index.html" else p["title"] + " — Élan Académie"
     head_meta = f'''<title>{title}</title>
@@ -608,7 +669,7 @@ def main():
         with open(os.path.join(art, name), "w", encoding="utf-8") as f:
             f.write(page_html(name, p, full=(name != "index.html")))
     for d in (site, art):
-        for a in ("site.css", "site.js"):
+        for a in ("site.css", "site.js", "candidature.js"):
             shutil.copy(os.path.join(SRC, "assets", a), os.path.join(d, "assets", a))
         for l in ("logo-horizontal.svg", "logo-horizontal-negatif.svg", "logo-symbole.svg", "logo-symbole-negatif.svg", "logo-vertical.svg"):
             shutil.copy(os.path.join(LOGOS, l), os.path.join(d, "assets", l))

@@ -241,3 +241,19 @@ td .price { font-family: var(--font-display); font-weight: 600; font-size: 1.15r
 .offer { gap: 10px; }
 .offer .offer-num { font-family: var(--font-display); font-weight: 600; color: var(--green-text); letter-spacing: 0.08em; font-size: 0.9rem; }
 .offer a.more { font-weight: 700; margin-top: auto; }
+
+/* Candidature : test en trois étapes */
+.cand-progress { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+.cand-progress span { font-size: 0.82rem; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: var(--bg2); color: var(--ink3); }
+.cand-progress span.on { background: var(--brand); color: #fff; }
+.cand-progress span.done { background: var(--pill-green-bg); color: var(--pill-green-fg); }
+.quiz-q { border: 1px solid var(--line); border-radius: var(--radius-s); padding: 14px 16px; margin: 0 0 12px; background: var(--card); }
+.quiz-q legend { font-weight: 700; padding: 0 6px; }
+.quiz-opt { display: flex; align-items: center; gap: 10px; padding: 8px 6px; cursor: pointer; }
+.quiz-opt input { width: 20px; height: 20px; accent-color: var(--brand); }
+.rec-stage { position: relative; background: #000; border-radius: var(--radius-s); overflow: hidden; aspect-ratio: 4 / 3; max-width: 560px; }
+.rec-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rec-timer { position: absolute; top: 10px; left: 10px; background: #C0392B; color: #fff; font-weight: 700; padding: 4px 10px; border-radius: 999px; font-size: 0.85rem; }
+.rec-controls { margin-top: 12px; }
+.rec-link { flex: 1 1 240px; font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-s); padding: 10px 12px; min-width: 0; }
+.input-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

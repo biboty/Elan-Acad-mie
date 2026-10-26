@@ -93,9 +93,22 @@ PLUS TARD
      famille, enfant (facultatif), montant, date, mode. Le solde = versements − séances consommées, calculé tout seul :
      chaque présence à une séance de groupe (tarif par séance) et chaque séance réservée passée (tarif par heure,
      au prorata). Une réservation marquée « absent » n'est ni facturée ni rémunérée.
-   - Tarifs (onglet Paiements, en bas) : par prestation, ce que paie la famille et ce que reçoit l'animateur. Valeurs de
-     départ : atelier 225 / 250 par séance, cours 200 / 200 par séance, essai 0 / 0, individuel et rattrapage 250 DH/h
-     payés, 125 DH/h versés à l'animateur par enfant. À ajuster.
+   - Catalogue des prestations (onglet Paiements, en bas) : par prestation, ce que paie la famille et ce que reçoit
+     l'animateur, par heure ou par séance. Vous ajoutez vos propres prestations (matières, niveaux). Valeurs de départ
+     à ajuster. Tarif négocié pour un enfant : fiche de l'enfant > « Tarifs de l'enfant ».
    - Animateur > Mon solde : ce que l'académie lui doit, mois par mois, séance par séance. Il ne voit jamais les
      versements des familles ni les tarifs payés : la base ne les lui montre pas.
    - Parent > Paiements : son solde, ses versements, ses séances consommées, les tarifs.
+
+11. CATALOGUE, TARIF PAR ENFANT, RECRUTEMENT (ajouté le 26 octobre 2026, soir)
+   - Base déjà créée avant : exécuter une fois supabase/migration-2026-10-26-catalogue-recrutement.sql (fait le 26 octobre).
+   - Catalogue : chaque groupe, chaque créneau et chaque rencontre métiers pointe vers une prestation du catalogue
+     (sinon la prestation par défaut de son type). Une rencontre n'est facturée que si « Facturer » est coché.
+   - Recrutement : le lien du test est .../candidature.html (bouton « Copier le lien du test » dans l'onglet Recrutement).
+     Le candidat remplit ses coordonnées, passe un QCM de 10 questions tirées au sort dans sa matière et son niveau,
+     enregistre une vidéo de présentation (3 min) puis une vidéo de situation (4 min, une erreur d'élève à repérer),
+     depuis son navigateur (ou colle un lien). Les vidéos vont dans le bucket privé « candidatures » (80 Mo maximum
+     par vidéo), lisibles par l'administration seulement. Onglet Recrutement : candidatures à évaluer, QCM corrigé,
+     vidéos, décision (Retenir / Refuser), suppression. « Questions et situations » : ajouter ou modifier le QCM.
+     Un candidat retenu reçoit son accès comme un animateur (Supabase > Users > Add user, puis rôle dans Équipe).
+   - Deux candidatures « Test automatique » ont servi à vérifier l'installation : à supprimer depuis l'onglet Recrutement.

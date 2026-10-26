@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rejoindre l'équipe — Élan Académie</title>
+<meta name="description" content="Enseignants, étudiants ingénieurs, professionnels : rejoignez l'équipe d'Élan Académie. Un test en trois étapes, 30 minutes, depuis votre navigateur.">
+<meta property="og:title" content="Rejoindre l'équipe — Élan Académie"><meta property="og:description" content="Enseignants, étudiants ingénieurs, professionnels : rejoignez l'équipe d'Élan Académie. Un test en trois étapes, 30 minutes, depuis votre navigateur."><meta property="og:type" content="website"><meta property="og:locale" content="fr_MA">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20300%20300%22%20width%3D%2264%22%20height%3D%2264%22%3E%3Cpath%20d%3D%22M60%20240L144%20160%22%20stroke%3D%22%23243B8C%22%20stroke-width%3D%2214%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22/%3E%3Cpath%20d%3D%22M144%20160L238%2068%22%20stroke%3D%22%23243B8C%22%20stroke-width%3D%2214%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22/%3E%3Ccircle%20cx%3D%2260%22%20cy%3D%22240%22%20r%3D%2218%22%20fill%3D%22%23243B8C%22/%3E%3Ccircle%20cx%3D%22144%22%20cy%3D%22160%22%20r%3D%2224%22%20fill%3D%22%23243B8C%22/%3E%3Ccircle%20cx%3D%22238%22%20cy%3D%2268%22%20r%3D%2232%22%20fill%3D%22%233EC28F%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600&family=Nunito+Sans:wght@400;700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="manifest" href="app/manifest.webmanifest">
+<link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#F7F8FC">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Élan">
+<script src="app/config.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand logo-switch" href="index.html" aria-label="Élan Académie, accueil">
+      <img class="logo-light" src="assets/logo-horizontal.svg" alt="Élan Académie" width="94" height="40">
+      <img class="logo-dark" src="assets/logo-horizontal-negatif.svg" alt="" width="94" height="40">
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <nav class="nav" id="nav" aria-label="Navigation principale"><a href="programme.html">Ateliers</a><a href="cours.html">Cours</a><a href="metiers.html">Rencontres métiers</a><a href="stages.html">Stages</a><a href="a-propos.html">À propos</a><a href="faq.html">FAQ</a><a href="app/">Espace famille</a><a class="btn btn-primary" href="inscription.html">S'inscrire</a></nav>
+  </div>
+</header>
+<main>
+<section class="section">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Rejoindre l'équipe</p><h1>Animer un atelier ou un cours chez Élan Académie</h1><p class="lead">Nous cherchons des personnes qui savent expliquer, qui aiment les enfants et qui tiennent un groupe. Le test prend 30 minutes, depuis votre navigateur, en trois étapes. Le fondateur regarde chaque candidature et vous répond sous une semaine.</p></div>
+    <div class="grid grid-3" style="margin-bottom:28px">
+      <div class="step"><span class="when">Étape 1</span><h3>Un QCM de 10 questions</h3><p>Dans votre matière et votre niveau. Dix minutes, sans documents.</p></div>
+      <div class="step"><span class="when">Étape 2</span><h3>Trois minutes face caméra</h3><p>Qui vous êtes, pourquoi vous voulez enseigner, ce que vous faites quand un enfant décroche.</p></div>
+      <div class="step"><span class="when">Étape 3</span><h3>Une situation à corriger</h3><p>Le travail d'un élève, avec une erreur. Vous la trouvez et vous l'expliquez à l'oral, comme en séance.</p></div>
+    </div>
+    <div class="form-wrap" id="cand">
+      <div class="cand-progress" id="cand-progress" aria-hidden="true"><span class="on">Vous</span><span>QCM</span><span>Présentation</span><span>Situation</span><span>Envoi</span></div>
+
+      <form class="form" id="cand-form" novalidate>
+        <div class="row">
+          <div class="field"><label for="c-nom">Nom et prénom</label><input id="c-nom" name="full_name" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="c-email">E-mail</label><input id="c-email" name="email" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="c-tel">WhatsApp</label><input id="c-tel" name="phone" type="tel" autocomplete="tel" placeholder="06 12 34 56 78"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="c-matiere">Matière</label><select id="c-matiere" name="subject"><option>Mathématiques</option><option>Physique-chimie</option><option>Robotique et programmation</option><option>Prise de parole et argumentation</option></select></div>
+          <div class="field"><label for="c-niveau">Niveau</label><select id="c-niveau" name="level"><option value="college">Collège</option><option value="lycee">Lycée</option></select><span class="hint">Pour la robotique et la prise de parole, le niveau sert surtout à la situation.</span></div>
+        </div>
+        <div class="field"><label for="c-exp">Votre expérience en deux phrases</label><textarea id="c-exp" name="experience" placeholder="Études, cours particuliers, encadrement de jeunes, projets…"></textarea></div>
+        <p class="error" id="cand-erreur" aria-live="polite"></p>
+        <div class="btn-row"><button class="btn btn-primary btn-lg" type="submit">Commencer le test</button></div>
+        <p class="small muted">Vos réponses et vos vidéos ne sont vues que par le fondateur, pour cette candidature. Vous pouvez demander leur suppression à tout moment.</p>
+      </form>
+
+      <div id="cand-quiz" hidden>
+        <h2 style="font-size:1.4rem">Étape 1 · QCM</h2>
+        <p class="muted">Une seule réponse par question. Répondez à tout, puis validez.</p>
+        <form class="form" id="quiz-form" novalidate><div id="quiz-list"></div><p class="error" id="quiz-erreur" aria-live="polite"></p><div class="btn-row"><button class="btn btn-primary btn-lg" type="submit">Valider mes réponses</button></div></form>
+      </div>
+
+      <div id="cand-video1" hidden>
+        <h2 style="font-size:1.4rem">Étape 2 · Présentation</h2>
+        <p class="muted">Trois minutes au maximum. Présentez-vous, dites pourquoi vous voulez enseigner chez nous et ce que vous faites quand un enfant décroche. Vous pouvez recommencer autant de fois que vous voulez avant d'envoyer.</p>
+        <div class="recorder" data-step="1" data-max="180"></div>
+      </div>
+
+      <div id="cand-video2" hidden>
+        <h2 style="font-size:1.4rem">Étape 3 · Situation</h2>
+        <div class="card" style="margin:14px 0"><p class="eyebrow" id="sit-title"></p><p id="sit-text"></p></div>
+        <p class="muted">Quatre minutes au maximum. Trouvez l'erreur, puis expliquez-la à l'oral comme vous le feriez face à l'élève : avec ses mots, sans le brusquer.</p>
+        <div class="recorder" data-step="2" data-max="240"></div>
+      </div>
+
+      <div class="form-status" id="cand-done" hidden>
+        <p class="eyebrow">Candidature envoyée</p>
+        <h2 style="font-size:1.5rem">Merci. Le fondateur regarde votre test et vous répond sous une semaine.</h2>
+        <p class="muted">Si vous avez une question entre-temps, écrivez-nous sur WhatsApp.</p>
+        <div class="btn-row"><a class="btn btn-primary" data-wa="Bonjour, je viens de passer le test pour rejoindre l'équipe d'Élan Académie." href="#">WhatsApp</a><a class="btn btn-secondary" href="index.html">Retour au site</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="assets/candidature.js"></script>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="logo-switch">
+      <img class="logo-light" src="assets/logo-horizontal.svg" alt="Élan Académie" width="118" height="50" style="height:50px;width:auto">
+      <img class="logo-dark" src="assets/logo-horizontal-negatif.svg" alt="" width="118" height="50" style="height:50px;width:auto">
+      <p style="margin-top:12px;max-width:34ch">Académie en présentiel à Casablanca pour les 7-18 ans : ateliers de robotique et de sciences, cours de mathématiques et de physique, rencontres métiers.</p>
+      <p class="small muted" style="margin-top:10px">Élan Académie, SARL en cours de création. Casablanca, Maroc.</p>
+    </div>
+    <div>
+      <h4>L'académie</h4>
+      <ul><li><a href="programme.html">Ateliers robotique et sciences</a></li><li><a href="cours.html">Cours de maths et de physique</a></li><li><a href="metiers.html">Rencontres métiers</a></li><li><a href="stages.html">Stages de vacances</a></li><li><a href="parcours.html">Les parcours</a></li><li><a href="a-propos.html">À propos</a></li></ul>
+    </div>
+    <div>
+      <h4>Parents</h4>
+      <ul><li><a href="inscription.html">Liste d'attente</a></li><li><a href="app/">Espace famille (connexion)</a></li><li><a href="faq.html">Questions fréquentes</a></li><li><a href="a-propos.html#securite">Sécurité des enfants</a></li><li><a href="candidature.html">Rejoindre l'équipe</a></li><li><a href="mentions-legales.html">Mentions légales</a></li></ul>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul><li><a data-wa="" href="#">WhatsApp <span data-wa-number></span></a></li><li><span data-email></span></li><li><a data-instagram href="#" target="_blank" rel="noopener">Instagram</a></li><li><a data-linkedin href="#" target="_blank" rel="noopener">LinkedIn</a></li><li><a data-facebook href="#" target="_blank" rel="noopener">Facebook</a></li></ul>
+    </div>
+  </div>
+  <div class="wrap footer-bottom"><span>© <span data-year></span> Élan Académie</span><span>Les notes ouvrent la porte. Ce que votre enfant apprend ici décide de ce qui se passe derrière.</span></div>
+</footer>
+<a class="wa-float" data-wa="Bonjour, j'ai une question sur Élan Académie." href="#"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 1.8a8.2 8.2 0 0 1 0 16.4 8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 0 1 12 3.8zm-3 4.4c-.2 0-.5 0-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.2 5 4.4 2.5 1 3 .8 3.5.7.5 0 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3l-2-1c-.3-.1-.5-.1-.7.1l-.9 1.1c-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.5.3-.5v-.5l-.9-2.2c-.2-.5-.4-.4-.6-.4h-.5z"/></svg> WhatsApp</a>
+<script src="assets/site.js"></script>
+<script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});</script>
+</body>
+</html>
