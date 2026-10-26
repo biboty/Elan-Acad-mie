@@ -86,3 +86,16 @@ PLUS TARD
    - Parent : Réserver > choisit l'animateur et le créneau > Réserver : confirmé tout de suite si une place reste et si
      le créneau n'est pas passé (la base vérifie). Annulation possible jusqu'à l'heure de la séance.
    - Parent : Planning = séances de groupe + séances réservées, jour par jour, bouton « Rejoindre » quand c'est en ligne.
+
+10. PAIEMENTS, SOLDES ET RÉMUNÉRATION DES ANIMATEURS (ajouté le 26 octobre 2026)
+   - Base déjà créée avant cette date : exécuter une fois supabase/migration-2026-10-26-paiements.sql (fait le 26 octobre).
+   - Les familles paient directement (espèces, virement). Administration > Paiements > « Enregistrer un paiement » :
+     famille, enfant (facultatif), montant, date, mode. Le solde = versements − séances consommées, calculé tout seul :
+     chaque présence à une séance de groupe (tarif par séance) et chaque séance réservée passée (tarif par heure,
+     au prorata). Une réservation marquée « absent » n'est ni facturée ni rémunérée.
+   - Tarifs (onglet Paiements, en bas) : par prestation, ce que paie la famille et ce que reçoit l'animateur. Valeurs de
+     départ : atelier 225 / 250 par séance, cours 200 / 200 par séance, essai 0 / 0, individuel et rattrapage 250 DH/h
+     payés, 125 DH/h versés à l'animateur par enfant. À ajuster.
+   - Animateur > Mon solde : ce que l'académie lui doit, mois par mois, séance par séance. Il ne voit jamais les
+     versements des familles ni les tarifs payés : la base ne les lui montre pas.
+   - Parent > Paiements : son solde, ses versements, ses séances consommées, les tarifs.

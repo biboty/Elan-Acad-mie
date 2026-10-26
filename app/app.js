@@ -18,6 +18,7 @@
   var DAYS = ["samedi", "mercredi", "autre"];
   var SLOT_KINDS = { essai: "Séance d'essai", individuel: "Séance individuelle", rattrapage: "Rattrapage" };
   var DURATIONS = [30, 45, 60, 90, 120];
+  var METHODS = { especes: "Espèces", virement: "Virement", cheque: "Chèque", autre: "Autre" };
   var BADGES = ["Programmer un capteur", "Souder", "Imprimer une pièce en 3D", "Présenter sans notes", "Poser une question à un professionnel", "Finir un projet", "Aider un binôme"];
 
   // ---------------------------------------------------------------- utilitaires
@@ -65,7 +66,10 @@
   function timeSortable(t) { var m = /(\d{1,2})\s*[h:]\s*(\d{0,2})/.exec(t || ""); return m ? pad(+m[1]) + ":" + pad(+(m[2] || 0)) : "00:00"; }
   function slotLabel(sl) { return (SLOT_KINDS[sl.kind] || "Séance") + (sl.subject ? " · " + sl.subject : ""); }
   function pills(text) { return String(text || "").split(/[,;·]/).map(function (x) { return x.trim(); }).filter(Boolean).map(function (x) { return '<span class="pill">' + esc(x) + "</span>"; }).join(" "); }
+  function dh(n) { n = Math.round(+n || 0); var neg = n < 0; var t = String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f"); return (neg ? "−" : "") + t + "\u00a0DH"; }
   var ICONS = {
+    paiements: '<rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5h.01M17.5 14.5h.01"/>',
+    solde: '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><rect x="4" y="8" width="16.5" height="11" rx="2.5"/><circle cx="16" cy="13.5" r="1.2"/>',
     planning: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
     reserver: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/>',
     creneaux: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
@@ -152,9 +156,9 @@
 
   // ---------------------------------------------------------------- navigation
   var NAV = {
-    admin: [["accueil", "Tableau de bord"], ["liste", "Liste d'attente"], ["familles", "Familles"], ["enfants", "Enfants"], ["groupes", "Groupes"], ["seances", "Séances"], ["creneaux", "Créneaux"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["equipe", "Équipe"], ["compte", "Mon compte"]],
-    animateur: [["seances", "Mes séances"], ["creneaux", "Mes créneaux"], ["enfants", "Mes enfants"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]],
-    parent: [["enfants", "Mes enfants"], ["planning", "Planning"], ["reserver", "Réserver"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]]
+    admin: [["accueil", "Tableau de bord"], ["liste", "Liste d'attente"], ["familles", "Familles"], ["enfants", "Enfants"], ["groupes", "Groupes"], ["seances", "Séances"], ["creneaux", "Créneaux"], ["paiements", "Paiements"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["equipe", "Équipe"], ["compte", "Mon compte"]],
+    animateur: [["seances", "Mes séances"], ["creneaux", "Mes créneaux"], ["solde", "Mon solde"], ["enfants", "Mes enfants"], ["retours", "Retours mensuels"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]],
+    parent: [["enfants", "Mes enfants"], ["planning", "Planning"], ["reserver", "Réserver"], ["paiements", "Paiements"], ["rencontres", "Rencontres métiers"], ["compte", "Mon compte"]]
   };
   var VIEWS = {};
 
@@ -575,10 +579,10 @@
     var nowIso = new Date().toISOString();
     var upcoming = slots.filter(function (sl) { return sl.starts_at >= nowIso; }), past = slots.filter(function (sl) { return sl.starts_at < nowIso; }).reverse();
     var row = function (sl) {
-      var bks = (sl.bookings || []).filter(function (b) { return b.status === "confirme"; });
+      var bks = (sl.bookings || []).filter(function (b) { return b.status === "confirme" || b.status === "absent"; });
       var isPast = sl.starts_at < nowIso;
       return '<div class="row-card' + (dayKey(sl.starts_at) === todayISO() ? " row-today" : "") + '"><div><div class="title"><span class="time">' + esc(fmtTime(sl.starts_at)) + "</span> " + esc(dayLabel(dayKey(sl.starts_at))) + " · " + esc(slotLabel(sl)) + ' <span class="pill' + (bks.length >= sl.capacity ? "" : " pill-green") + '">' + bks.length + " / " + sl.capacity + '</span></div><div class="meta">' + esc([roleIs("admin") ? animName(sl.animateur_id) : "", sl.duration_min + " min", sl.mode === "visio" ? (sl.meeting_url ? "En ligne" : "En ligne · lien manquant") : "En présentiel", sl.note].filter(Boolean).join(" · ")) + "</div>" +
-        (bks.length ? '<div class="list" style="margin-top:10px">' + bks.map(function (b) { var c = b.children || {}, f = c.families || {}; return '<div class="booking"><div><strong>' + esc(c.first_name || "Enfant") + "</strong>" + (f.parent_name ? ' <span class="muted-sm">· ' + esc(f.parent_name) + (f.phone ? ' · <a href="' + waLink(f.phone) + '" target="_blank" rel="noopener">' + esc(f.phone) + "</a>" : "") + "</span>" : "") + '</div><form class="input-row" data-booking-note="' + b.id + '">' + input("note", b.note, "text", 'placeholder="Mot pour les parents après la séance"') + '<button class="btn btn-secondary btn-sm" type="submit">Enregistrer</button>' + (isPast ? "" : '<button class="btn btn-secondary btn-sm" type="button" data-cancel-booking="' + b.id + '">Annuler</button>') + "</form></div>"; }).join("") + "</div>" : '<p class="muted-sm" style="margin-top:6px">Personne n\'a encore réservé.</p>') +
+        (bks.length ? '<div class="list" style="margin-top:10px">' + bks.map(function (b) { var c = b.children || {}, f = c.families || {}; return '<div class="booking"><div><strong>' + esc(c.first_name || "Enfant") + "</strong>" + (b.status === "absent" ? ' <span class="pill">Absent</span>' : "") + (f.parent_name ? ' <span class="muted-sm">· ' + esc(f.parent_name) + (f.phone ? ' · <a href="' + waLink(f.phone) + '" target="_blank" rel="noopener">' + esc(f.phone) + "</a>" : "") + "</span>" : "") + '</div><form class="input-row" data-booking-note="' + b.id + '">' + input("note", b.note, "text", 'placeholder="Mot pour les parents après la séance"') + '<button class="btn btn-secondary btn-sm" type="submit">Enregistrer</button>' + (isPast ? (b.status === "absent" ? '<button class="btn btn-secondary btn-sm" type="button" data-booking-status="' + b.id + '" data-value="confirme">Présent finalement</button>' : '<button class="btn btn-secondary btn-sm" type="button" data-booking-status="' + b.id + '" data-value="absent">Absent</button>') : '<button class="btn btn-secondary btn-sm" type="button" data-cancel-booking="' + b.id + '">Annuler</button>') + "</form></div>"; }).join("") + "</div>" : '<p class="muted-sm" style="margin-top:6px">Personne n\'a encore réservé.</p>') +
         '<div id="slot-' + sl.id + '" hidden><div class="inline-form" style="margin-top:12px">' + form(sl) + "</div></div></div>" +
         '<div class="actions">' + (!isPast && sl.meeting_url ? launchBtn(sl, "btn-primary", "Lancer") : "") + '<button class="btn btn-secondary btn-sm" type="button" data-toggle="slot-' + sl.id + '">Modifier</button>' + (bks.length ? "" : '<button class="btn btn-secondary btn-sm" type="button" data-delete-slot="' + sl.id + '">Supprimer</button>') + "</div></div>";
     };
@@ -589,8 +593,80 @@
       $$("[data-slot-form]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); var id = f.getAttribute("data-slot-form"); if (!v.starts_at) { toast("Indiquez la date et l'heure.", true); return; } var payload = { animateur_id: v.animateur_id || profile.id, starts_at: new Date(v.starts_at).toISOString(), duration_min: +v.duration_min || 60, kind: v.kind, subject: nullIfEmpty(v.subject), capacity: Math.min(8, Math.max(1, +v.capacity || 1)), mode: v.mode, meeting_url: nullIfEmpty(v.meeting_url), note: nullIfEmpty(v.note) }; if (id) await q(sb.from("slots").update(payload).eq("id", id)); else await q(sb.from("slots").insert(payload)); toast(id ? "Créneau enregistré." : "Créneau publié : les familles peuvent le réserver."); route(); }); });
       $$("[data-booking-note]").forEach(function (f) { f.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(f); await q(sb.from("bookings").update({ note: nullIfEmpty(v.note) }).eq("id", f.getAttribute("data-booking-note"))); toast("Mot enregistré : les parents le voient dans leur espace."); }); });
       $$("[data-cancel-booking]").forEach(function (b) { b.addEventListener("click", async function () { if (b.getAttribute("data-confirm") !== "1") { b.setAttribute("data-confirm", "1"); b.textContent = "Confirmer"; return; } await q(sb.from("bookings").update({ status: "annule" }).eq("id", b.getAttribute("data-cancel-booking"))); toast("Réservation annulée. Prévenez la famille."); route(); }); });
+      $$("[data-booking-status]").forEach(function (b) { b.addEventListener("click", async function () { await q(sb.from("bookings").update({ status: b.getAttribute("data-value") }).eq("id", b.getAttribute("data-booking-status"))); toast(b.getAttribute("data-value") === "absent" ? "Marqué absent : ni facturé, ni rémunéré." : "Présence rétablie."); route(); }); });
       $$("[data-delete-slot]").forEach(function (b) { b.addEventListener("click", async function () { if (b.getAttribute("data-confirm") !== "1") { b.setAttribute("data-confirm", "1"); b.textContent = "Confirmer"; return; } await q(sb.from("slots").delete().eq("id", b.getAttribute("data-delete-slot"))); toast("Créneau supprimé."); route(); }); });
     }, 0);
+    return html;
+  };
+
+  // ---------------------------------------------------------------- Paiements (admin : saisie, soldes, tarifs, rémunération ; parent : son solde)
+  function balancePill(v) { return '<span class="pill' + (v >= 0 ? " pill-green" : " pill-warn") + '">Solde ' + dh(v) + "</span>"; }
+  function ratesTable(rates, editable) {
+    return '<div class="table-wrap"><table><thead><tr><th>Prestation</th><th>Payé par la famille, par enfant</th>' + (editable ? "<th>Versé à l'animateur</th>" : "") + "</tr></thead><tbody>" + rates.map(function (r) {
+      var unit = r.unit === "heure" ? " / h" : " / séance";
+      return "<tr><td>" + esc(r.label) + "</td><td>" + (editable ? '<input class="num" name="price-' + r.kind + '" type="number" min="0" step="5" value="' + esc(r.price_dh) + '"> DH' + unit : esc(dh(r.price_dh)) + unit) + "</td>" + (editable ? '<td><input class="num" name="anim-' + r.kind + '" type="number" min="0" step="5" value="' + esc(r.animateur_dh) + '"> DH' + (r.unit === "heure" ? " / h" : "") + (r.animateur_unit === "enfant" ? " par enfant" : " par séance") + "</td>" : "") + "</tr>";
+    }).join("") + "</tbody></table></div>";
+  }
+  function chargesList(lines) { return lines.length ? '<div class="list">' + lines.map(function (l) { return '<div class="row-card slim"><div><div class="title">' + esc(l.label) + '</div><div class="meta">' + esc(fmtDate(l.on_date)) + (l.first_name ? " · " + esc(l.first_name) : "") + "</div></div><div class=\"amount\">−" + esc(dh(l.amount_dh)) + "</div></div>"; }).join("") + "</div>" : '<p class="muted-sm">Aucune séance consommée pour l\'instant.</p>'; }
+  function paymentsList(rows, canDelete) { return rows.length ? '<div class="list">' + rows.map(function (p) { return '<div class="row-card slim"><div><div class="title">' + esc(METHODS[p.method] || p.method) + (p.children && p.children.first_name ? " · pour " + esc(p.children.first_name) : "") + '</div><div class="meta">' + esc(fmtDate(p.paid_at)) + (p.note ? " · " + esc(p.note) : "") + '</div></div><div class="amount plus">+' + esc(dh(p.amount_dh)) + (canDelete ? ' <button class="link-btn" type="button" data-delete-payment="' + p.id + '">retirer</button>' : "") + "</div></div>"; }).join("") + "</div>" : '<p class="muted-sm">Aucun paiement enregistré.</p>'; }
+
+  VIEWS.paiements = async function () {
+    if (roleIs("animateur")) { location.hash = "solde"; return ""; }
+    var rates = await q(sb.from("rates").select("*").order("kind"));
+    var order = ["atelier", "cours", "essai", "individuel", "rattrapage"]; rates.sort(function (a, b) { return order.indexOf(a.kind) - order.indexOf(b.kind); });
+    if (roleIs("parent")) {
+      if (!profile.family_id) return pageHead("Paiements") + '<div class="empty">Votre compte n\'est pas encore relié à une famille. Écrivez-nous sur WhatsApp avec l\'adresse e-mail de ce compte.</div>';
+      var pays = await q(sb.from("payments").select("*, children(first_name)").order("paid_at", { ascending: false }));
+      var charges = await q(sb.rpc("family_charges", { fam: profile.family_id }));
+      var paid = pays.reduce(function (t, p) { return t + (+p.amount_dh); }, 0), used = charges.reduce(function (t, c) { return t + (+c.amount_dh); }, 0);
+      var html = pageHead("Paiements", "Vous réglez directement à l'académie (espèces, virement) ; nous créditons votre solde, chaque séance le débite.");
+      html += '<div class="hero-card"><div><p class="eyebrow">Votre solde</p><h2>' + esc(dh(paid - used)) + '</h2><p class="muted">' + esc(dh(paid)) + " versés · " + esc(dh(used)) + " consommés" + (paid - used < 0 ? " · merci de régulariser à la prochaine séance" : "") + '</p></div><div class="btn-row"><a class="btn btn-primary" href="' + waLink("33760206797", "Bonjour, je souhaite effectuer un paiement pour l'espace famille.") + '" target="_blank" rel="noopener">Régler sur WhatsApp</a></div></div>';
+      html += '<div class="detail-grid"><div class="card"><h3>Versements</h3>' + paymentsList(pays, false) + '</div><div class="card"><h3>Séances consommées</h3>' + chargesList(charges) + "</div></div>";
+      html += '<div class="card"><h3>Tarifs</h3>' + ratesTable(rates, false) + '<p class="muted-sm">Une séance d\'essai est offerte. Les séances individuelles sont facturées au prorata de leur durée.</p></div>';
+      return html;
+    }
+    // administration
+    var fams = await q(sb.from("families").select("id, parent_name, children(id, first_name)").order("parent_name"));
+    var balances = await q(sb.rpc("family_balances"));
+    var payments = await q(sb.from("payments").select("*, families(parent_name), children(first_name)").order("paid_at", { ascending: false }).limit(200));
+    var team = await q(sb.from("profiles").select("id, full_name, email, role").in("role", ["animateur", "admin"]).order("full_name"));
+    var month = (location.hash.split("/")[1]) || monthKey();
+    var earnings = {}; for (var i = 0; i < team.length; i++) earnings[team[i].id] = await q(sb.rpc("animateur_earnings", { who: team[i].id }));
+    var monthTotal = function (lines) { return lines.filter(function (l) { return l.month === month; }).reduce(function (t, l) { return t + (+l.amount_dh); }, 0); };
+    var paidMonth = payments.filter(function (p) { return (p.paid_at || "").slice(0, 7) === month; }).reduce(function (t, p) { return t + (+p.amount_dh); }, 0);
+    var negative = balances.filter(function (b) { return +b.balance_dh < 0; });
+    var teamMonth = team.reduce(function (t, m) { return t + monthTotal(earnings[m.id] || []); }, 0);
+    var months = []; for (var j = -1; j < 11; j++) { var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - j); months.push(monthKey(d)); }
+    var html = pageHead("Paiements", "Les familles paient directement ; vous saisissez chaque versement ici. Le solde se calcule tout seul, séance par séance.", '<button class="btn btn-primary" type="button" data-toggle="new-payment">Enregistrer un paiement</button>');
+    html += '<div class="inline-form" id="new-payment" hidden><h3>Nouveau paiement</h3><form class="form" id="form-payment"><div class="row">' + field("Famille", '<select name="family_id" required>' + optionsFrom(fams, "", function (f) { return f.parent_name; }, "Choisir") + "</select>") + field("Enfant (facultatif)", '<select name="child_id"><option value="">Toute la famille</option></select>') + field("Montant", input("amount_dh", "", "number", 'min="1" step="1" required placeholder="500"'), "En dirhams.") + "</div><div class=\"row\">" + field("Date", input("paid_at", todayISO(), "date", "required")) + field("Mode", '<select name="method">' + options(METHODS, "especes") + "</select>") + field("Note", input("note", "", "text", 'placeholder="Octobre, 2 séances d\'avance…"')) + '</div><div class="btn-row"><button class="btn btn-primary" type="submit">Enregistrer</button></div></form></div>';
+    html += '<div class="toolbar"><label for="month-pick" class="muted-sm">Mois</label><select id="month-pick">' + months.map(function (m) { return '<option value="' + m + '"' + (m === month ? " selected" : "") + ">" + esc(monthLabel(m)) + "</option>"; }).join("") + "</select></div>";
+    html += '<div class="stat-grid"><div class="stat"><strong>' + esc(dh(paidMonth)) + "</strong><span>encaissés en " + esc(monthLabel(month)) + '</span></div><div class="stat"><strong>' + esc(dh(teamMonth)) + "</strong><span>à verser aux animateurs pour " + esc(monthLabel(month)) + '</span></div><div class="stat' + (negative.length ? " warn" : "") + '"><strong>' + negative.length + "</strong><span>famille" + (negative.length > 1 ? "s" : "") + " en solde négatif</span></div></div>";
+    html += '<h3>Soldes des familles</h3><div class="list">' + (balances.length ? balances.map(function (b) { return '<div class="row-card"><div><div class="title">' + esc(b.parent_name) + " " + balancePill(+b.balance_dh) + '</div><div class="meta">' + esc(dh(b.paid_dh)) + " versés · " + esc(dh(b.charged_dh)) + ' consommés</div><div id="fam-ledger-' + b.family_id + '" hidden><div class="detail-grid" style="margin-top:12px"><div><h4>Versements</h4>' + paymentsList(payments.filter(function (p) { return p.family_id === b.family_id; }), true) + '</div><div><h4>Séances consommées</h4><div data-charges="' + b.family_id + '"><p class="muted-sm">Chargement…</p></div></div></div></div></div><div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-ledger="' + b.family_id + '">Détail</button></div></div>'; }).join("") : '<div class="empty">Aucune famille.</div>') + "</div>";
+    html += '<h3>Rémunération des animateurs · ' + esc(monthLabel(month)) + '</h3><div class="list">' + (team.length ? team.map(function (m) { var lines = (earnings[m.id] || []).filter(function (l) { return l.month === month; }); return '<div class="row-card"><div><div class="title">' + esc(m.full_name || m.email) + ' <span class="pill pill-green">' + esc(dh(monthTotal(earnings[m.id] || []))) + '</span></div><div class="meta">' + lines.length + " séance" + (lines.length > 1 ? "s" : "") + ' rémunérée' + (lines.length > 1 ? "s" : "") + '</div><div id="earn-' + m.id + '" hidden style="margin-top:10px">' + (lines.length ? '<div class="list">' + lines.map(function (l) { return '<div class="row-card slim"><div><div class="title">' + esc(l.label) + '</div><div class="meta">' + esc(fmtDate(l.on_date)) + " · " + esc(l.detail) + '</div></div><div class="amount plus">' + esc(dh(l.amount_dh)) + "</div></div>"; }).join("") + "</div>" : '<p class="muted-sm">Rien ce mois-ci.</p>') + '</div></div><div class="actions"><button class="btn btn-secondary btn-sm" type="button" data-toggle="earn-' + m.id + '">Détail</button></div></div>'; }).join("") : '<div class="empty">Aucun animateur.</div>') + "</div>";
+    html += '<h3>Tarifs</h3><form class="card" id="form-rates">' + ratesTable(rates, true) + '<p class="muted-sm">Groupes : par séance, l\'animateur touche un montant fixe par séance animée. Créneaux : par heure, au prorata de la durée ; l\'animateur touche sa part par enfant présent. Une réservation marquée « absent » n\'est ni facturée ni rémunérée.</p><div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Enregistrer les tarifs</button></div></form>';
+    setTimeout(function () {
+      var fp = $("#form-payment");
+      fp.family_id.addEventListener("change", function () { var f = fams.find(function (x) { return x.id === fp.family_id.value; }); fp.child_id.innerHTML = '<option value="">Toute la famille</option>' + optionsFrom((f && f.children) || [], "", function (c) { return c.first_name; }); });
+      fp.addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(fp); if (!v.family_id || !+v.amount_dh) { toast("Famille et montant sont obligatoires.", true); return; } await q(sb.from("payments").insert({ family_id: v.family_id, child_id: nullIfEmpty(v.child_id), amount_dh: +v.amount_dh, paid_at: v.paid_at || todayISO(), method: v.method, note: nullIfEmpty(v.note), created_by: profile.id })); toast("Paiement enregistré : " + dh(+v.amount_dh) + "."); route(); });
+      $("#month-pick").addEventListener("change", function () { location.hash = "paiements/" + $("#month-pick").value; });
+      $$("[data-ledger]").forEach(function (b) { b.addEventListener("click", async function () { var id = b.getAttribute("data-ledger"), box = $("#fam-ledger-" + id); box.hidden = !box.hidden; var slot = $('[data-charges="' + id + '"]'); if (!box.hidden && slot && !slot.getAttribute("data-loaded")) { var lines = await q(sb.rpc("family_charges", { fam: id })); slot.innerHTML = chargesList(lines); slot.setAttribute("data-loaded", "1"); } }); });
+      $$("[data-delete-payment]").forEach(function (b) { b.addEventListener("click", async function () { if (b.getAttribute("data-confirm") !== "1") { b.setAttribute("data-confirm", "1"); b.textContent = "confirmer"; return; } await q(sb.from("payments").delete().eq("id", b.getAttribute("data-delete-payment"))); toast("Paiement retiré."); route(); }); });
+      $("#form-rates").addEventListener("submit", async function (e) { e.preventDefault(); var v = readForm(e.target); for (var k = 0; k < rates.length; k++) { var r = rates[k]; await q(sb.from("rates").update({ price_dh: +v["price-" + r.kind] || 0, animateur_dh: +v["anim-" + r.kind] || 0 }).eq("kind", r.kind)); } toast("Tarifs enregistrés. Ils s'appliquent à toutes les séances, passées comprises."); route(); });
+    }, 0);
+    return html;
+  };
+
+  // ---------------------------------------------------------------- ANIMATEUR : mon solde (ce que l'académie me doit, mois par mois)
+  VIEWS.solde = async function () {
+    if (!roleIs("animateur") && !roleIs("admin")) { location.hash = "paiements"; return ""; }
+    var lines = await q(sb.rpc("animateur_earnings", { who: profile.id }));
+    var byMonth = {}; lines.forEach(function (l) { byMonth[l.month] = (byMonth[l.month] || 0) + (+l.amount_dh); });
+    var cur = monthKey(), curLines = lines.filter(function (l) { return l.month === cur; });
+    var monthsSorted = Object.keys(byMonth).sort().reverse();
+    var html = pageHead("Mon solde", "Ce que l'académie vous doit pour les séances animées, mois par mois. Le règlement se fait en début de mois suivant.");
+    html += '<div class="hero-card"><div><p class="eyebrow">' + esc(monthLabel(cur)) + '</p><h2>' + esc(dh(byMonth[cur] || 0)) + '</h2><p class="muted">' + curLines.length + " séance" + (curLines.length > 1 ? "s" : "") + " rémunérée" + (curLines.length > 1 ? "s" : "") + " ce mois-ci</p></div></div>";
+    html += '<div class="detail-grid"><div class="card"><h3>Détail du mois</h3>' + (curLines.length ? '<div class="list">' + curLines.map(function (l) { return '<div class="row-card slim"><div><div class="title">' + esc(l.label) + '</div><div class="meta">' + esc(fmtDate(l.on_date)) + " · " + esc(l.detail) + '</div></div><div class="amount plus">' + esc(dh(l.amount_dh)) + "</div></div>"; }).join("") + "</div>" : '<p class="muted-sm">Aucune séance rémunérée ce mois-ci. Une séance compte dès qu\'un enfant y est noté présent.</p>') + "</div>";
+    html += '<div class="card"><h3>Mois précédents</h3>' + (monthsSorted.filter(function (m) { return m !== cur; }).length ? '<div class="list">' + monthsSorted.filter(function (m) { return m !== cur; }).map(function (m) { return '<div class="row-card slim"><div><div class="title">' + esc(monthLabel(m)) + '</div><div class="meta">' + lines.filter(function (l) { return l.month === m; }).length + " séances</div></div><div class=\"amount\">" + esc(dh(byMonth[m])) + "</div></div>"; }).join("") + "</div>" : '<p class="muted-sm">Pas encore d\'historique.</p>') + "</div></div>";
     return html;
   };
 
